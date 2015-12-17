@@ -383,6 +383,7 @@ generateRuleSetUsingPaths <- function(paths,object)
     #paths_conditions[[i]][[2]] <- complex
     paths_conditions[[i]] <- Rule(complex = complex, consequent = Consequent(consequentKey = variableClassifyOn, consequentValue = result))
   }
+  class(paths_conditions) <- "ruleset"
   return(paths_conditions)
   
 }
@@ -584,10 +585,19 @@ computeErrorComplex <- function(complex, dataFrame, variableClassifyOn, classifi
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 
-predict <- function(ruleSet, toBeClassifiedDataFrame, trainingDataFrame, printLog)
+predict.ruleset <- function(object, newdata, trainingDataFrame, printLog,
+                          #type = c("vector", "prob", "class", "matrix"), na.action = na.pass,
+                          ...)
 {
+  if (!inherits(object, "ruleset")) stop("Not a legitimate \"ruleset\" object")
+
+#predict <- function(ruleSet, toBeClassifiedDataFrame, trainingDataFrame, printLog)
+#{
   ##apply(rpartNurseryTrainingDataFrame[1:5,],MARGIN = 1,  function(x) {x[8]} )
   #apply(dataToBeClassified, 1, function(x) {lapply} )
+  
+  ruleSet <- object
+  toBeClassifiedDataFrame <- newdata
   
   # find out how many samples from training set is covered by each rule
   rulesCoveredSamplesCount <- sapply(ruleSet, function(x)
@@ -633,7 +643,7 @@ predict <- function(ruleSet, toBeClassifiedDataFrame, trainingDataFrame, printLo
   error <- 0
   overallNumberOfClassificationsDone <- 0
   nonClassfiedSamplesCount <- 0
-  samplesCoveredByRulesMatrixBool <- apply(toBeClassifiedDataFrame, 1, function(sample)
+  result <- apply(toBeClassifiedDataFrame, 1, function(sample)
   {
     # sample is a single row from data frame now. its class is "numeric" !!
     samplesRulesNumberIter <<- samplesRulesNumberIter + 1
@@ -681,6 +691,7 @@ predict <- function(ruleSet, toBeClassifiedDataFrame, trainingDataFrame, printLo
     { # just in case
       stop("Error. Unknown rule classification variable type.")
     }
+    return(classifiedAs)
   })
   
   log(error, printLog = printLog)
@@ -697,7 +708,7 @@ predict <- function(ruleSet, toBeClassifiedDataFrame, trainingDataFrame, printLo
   log(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
   
 
-  return (error)
+  return (result)
   
   
 }
