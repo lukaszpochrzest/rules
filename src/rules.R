@@ -272,7 +272,7 @@ generatePaths <- function(frame)
 
 generateRuleSetUsingPaths <- function(paths,object)
 {
-  variableClassifyOn <- as.character(object$call$formula[[2]])  # variable we are classifing (on?) (:= variable we are trying to guess)
+  variableClassifyOn <- attr(rpartWineTrainingSetDataTreeObject$terms,"variables")[[2]] #as.character(object$call$formula[[2]])  # variable we are classifing (on?) (:= variable we are trying to guess)
   paths_size <- length(paths)
   paths_conditions <- list()
   paths_conditions[1:paths_size] <- rep(NULL,paths_size)[1:paths_size]
