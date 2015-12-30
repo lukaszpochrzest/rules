@@ -13,8 +13,8 @@ rpartWineTrainingDataRuleSet <- generateRuleSet(object = rpartWineTrainingSetDat
 rpartWineDataRuleSetPruned <- pruneRuleSet(ruleSet = rpartWineTrainingDataRuleSet, pruningDataFrame = rpartWinePruningDataFrame, trainingDataFrame = rpartWineTrainingDataFrame, printLog = FALSE)
 
 # CLASSIFICATION AND ERROR COMPUTATION #need some new "real data" set, pruning data set slice used temporarily instead
-#error1 <- rpartPredict(ruleSet = rpartWineTrainingDataRuleSet, toBeClassifiedDataFrame = rpartWineTestDataFrame[1:5,], trainingDataFrame = rpartWineTrainingDataFrame, printLog = FALSE)
-#error2 <- rpartPredict(ruleSet = rpartWineDataRuleSetPruned, toBeClassifiedDataFrame = rpartWineTestDataFrame[1:5,], trainingDataFrame = rpartWineTrainingDataFrame, printLog = FALSE)
+error1 <- predict(ruleSet = rpartWineTrainingDataRuleSet, toBeClassifiedDataFrame = rpartWineTestDataFrame[1:5,], trainingDataFrame = rpartWineTrainingDataFrame, printLog = FALSE)
+error2 <- predict(ruleSet = rpartWineDataRuleSetPruned, toBeClassifiedDataFrame = rpartWineTestDataFrame[1:5,], trainingDataFrame = rpartWineTrainingDataFrame, printLog = FALSE)
 
 #modelBayes <- naiveBayes(quality ~ ., data = rpartWineTrainingDataFrame, laplace = 3)
 #bayesPrediction <- predict( modelBayes, rpartWineTestDataFrame[,-ncol(rpartWineTestDataFrame)] )

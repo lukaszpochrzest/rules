@@ -405,6 +405,7 @@ pruneRuleSet <- function(ruleSet, pruningDataFrame, trainingDataFrame, printLog 
       log("----------------------------------------------------------------", printLog)
       pruneRule(rule = x, pruningDataFrame = pruningDataFrame, trainingDataFrame = trainingDataFrame, printLog = printLog)
     })
+  class(ruleSetPruned) <- "ruleset"
   return (ruleSetPruned)
 }
 
@@ -708,7 +709,7 @@ predict.ruleset <- function(object, newdata, trainingDataFrame, printLog,
   log(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
   
 
-  return (result)
+  return (error)
   
   
 }
