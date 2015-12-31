@@ -32,18 +32,26 @@ compareDataset <- function( filePrefix )
   attribNames <- colNames[-length(colNames)]
   className <- colNames[length(colNames)]
   attribString <- paste(attribNames, collapse=" + ")
-  rpartFormula <- as.formula(paste("as.factor(", className, ") ~ ", attribString ))
+  
+  bayesFormula <- as.formula(paste("as.factor(", className, ") ~ ", attribString ))
+  rpartFormula <- as.formula( paste(className, paste(attribNames, collapse=" + "), sep=" ~ ") )
   
   # Regression or classification
-  classExample <- rpartTrainingDataFrame[ 1, length(colNames) ]
-  if( is.character(classExample))
-    useMethod <- "class"
-  else if( is.numeric(classExample))
+  classExample <- rpartTrainingDataFrame[ 2, length(colNames) ]
+  
+  if( is.numeric(classExample))
     useMethod <- "anova"
+  else
+  {
+    useMethod <- "class"
+  }
+  
+  print( classExample )
+  print( useMethod )
   
   # Building bayes model
-  modelBayes <- naiveBayes( formula = rpartFormula, data = rpartTrainingDataFrame )
-  modelRpart <- rpart(cp = 0, method = "anova", data =  rpartTrainingDataFrame, rpartFormula )
+  modelBayes <- naiveBayes( formula = bayesFormula, data = rpartTrainingDataFrame )
+  modelRpart <- rpart(cp = 0, method = useMethod, data =  rpartTrainingDataFrame, rpartFormula )
   
 
   # Rpart RULE SET GENERATION
@@ -51,11 +59,11 @@ compareDataset <- function( filePrefix )
   rpartRuleSetPruned <- pruneRuleSet(ruleSet = rpartRuleSet, trainingDataFrame = rpartTrainingDataFrame, pruningDataFrame = rpartPruningDataFrame, printLog = FALSE)
   
 
-  error1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame[,1:ncol(rpartTestDataFrame)], trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
-  error2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame[,1:ncol(rpartTestDataFrame)], trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
+  error1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame, trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
+  error2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame, trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
   error3 <- bayesError(model = modelBayes, dataset = rpartTestDataFrame)
   
-  return ( list(error1,error2,error3) )
+  return ( list(error1,error2,error3, method = useMethod) )
 }
 
 ## Function makes the same as compareDataset but only for bayes

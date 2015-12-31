@@ -18,3 +18,8 @@ error2 <- predict(ruleSet = rpartWineDataRuleSetPruned, toBeClassifiedDataFrame 
 
 #modelBayes <- naiveBayes(quality ~ ., data = rpartWineTrainingDataFrame, laplace = 3)
 #bayesPrediction <- predict( modelBayes, rpartWineTestDataFrame[,-ncol(rpartWineTestDataFrame)] )
+
+source("compare.R")
+compareDataset("datasets/winequality")
+compareDataset("datasets/spambase")
+compareDataset("datasets/nursery")
