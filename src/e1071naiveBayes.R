@@ -63,8 +63,6 @@ bayesError <- function( model, dataset )
     
     classifiedAs <- sample[1]
     shouldBeClassifiedAs <- sample[2]
-    #print( classifiedAs )
-    #print( shouldBeClassifiedAs )
     
     if(is.character(classifiedAs))
     { # "categorical"
@@ -76,9 +74,7 @@ bayesError <- function( model, dataset )
     }
     else if(is.numeric(classifiedAs))
     { # "continuous"
-      #print((classifiedAs - shouldBeClassifiedAs)^2)
       error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
-      #print(error)
     }
     else
     { # just in case

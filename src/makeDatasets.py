@@ -11,17 +11,20 @@ def makeDataset( fileName, resultName ):
     random.seed()
 
     header = originFile.readline()
-    trainingFile.write( header )
-    pruningFile.write( header )
-    testFile.write( header )
+    csvHeader = header.replace( ",", ";" )
+	
+    trainingFile.write( csvHeader )
+    pruningFile.write( csvHeader )
+    testFile.write( csvHeader )
 
     for line in originFile:
         randNum = random.randrange( 1, 100 )
+        csvLine = line.replace( ",", ";" )
         if randNum < 33:
-            trainingFile.write( line )
+            trainingFile.write( csvLine )
         elif randNum < 66:
-            pruningFile.write( line )
+            pruningFile.write( csvLine )
         else:
-            testFile.write( line )
+            testFile.write( csvLine )
     
 

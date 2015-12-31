@@ -29,10 +29,17 @@ compareDataset <- function( filePrefix )
   
   # Extract column names form datasets and create formula
   colNames <- colnames( rpartTrainingDataFrame )
-  #attribNames <- colNames[-length(colNames)]
+  attribNames <- colNames[-length(colNames)]
   className <- colNames[length(colNames)]
-  #rpartFormula <- as.formula( paste(className, paste(attribNames, collapse=" + "), sep=" ~ ") )
-  rpartFormula <- as.formula(paste("as.factor(", className, ") ~ ."))
+  attribString <- paste(attribNames, collapse=" + ")
+  rpartFormula <- as.formula(paste("as.factor(", className, ") ~ ", attribString ))
+  
+  # Regression or classification
+  classExample <- rpartTrainingDataFrame[ 1, length(colNames) ]
+  if( is.character(classExample))
+    useMethod <- "class"
+  else if( is.numeric(classExample))
+    useMethod <- "anova"
   
   # Building bayes model
   modelBayes <- naiveBayes( formula = rpartFormula, data = rpartTrainingDataFrame )
@@ -45,12 +52,10 @@ compareDataset <- function( filePrefix )
   
 
   error1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame[,1:ncol(rpartTestDataFrame)], trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
-  #error1
   error2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame[,1:ncol(rpartTestDataFrame)], trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
-  #error2
-  bayesError(model = modelBayes, dataset = rpartTestDataFrame)
+  error3 <- bayesError(model = modelBayes, dataset = rpartTestDataFrame)
   
-  return ( list(error1,error2) )
+  return ( list(error1,error2,error3) )
 }
 
 ## Function makes the same as compareDataset but only for bayes
@@ -70,16 +75,17 @@ bayesTest <- function( filePrefix )
   
   # Extract column names form datasets and create formula
   colNames <- colnames( rpartTrainingDataFrame )
+  
+  print(length(colNames))
+  
   attribNames <- colNames[-length(colNames)]
   className <- colNames[length(colNames)]
-  #className <- as.factor( className )
-  #rpartFormula <- as.formula( paste( className, paste(attribNames, collapse=" + "), sep=" ~ ") )
   attribString <- paste(attribNames, collapse=" + ")
   rpartFormula <- as.formula(paste("as.factor(", className, ") ~ ", attribString ))
   
   # Building bayes model
   modelBayes <- naiveBayes( formula = rpartFormula, data = rpartTrainingDataFrame )
-  #print( rpartFormula )
+  print( rpartFormula )
   
   bayesError(model = modelBayes, dataset = rpartTestDataFrame)
 }
