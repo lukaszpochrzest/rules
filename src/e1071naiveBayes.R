@@ -48,13 +48,52 @@ bayesError <- function( model, dataset )
   realClasses <- dataset[,ncol(dataset)]
   toClassify <- dataset[,1:( ncol(dataset) - 1 )]
   
-  #print( toClassify )
+  predictions <- predict( object = model, newdata = toClassify, type = "class" )
   
-  predictions <- predict( object = model, newdata = toClassify )
-  
-  #print( model )
-  print( predictions )
   #logAll( realClasses, predictions, TRUE )
+  
+  comparisionList <- cbind( predictions, realClasses )
+  #print( comparisionList )
+  
+  error <- 0
+  overallNumberOfClassificationsDone <- 0
+  apply( comparisionList, 1, function(sample)
+  {
+    overallNumberOfClassificationsDone <<- overallNumberOfClassificationsDone + 1
+    
+    classifiedAs <- sample[1]
+    shouldBeClassifiedAs <- sample[2]
+    #print( classifiedAs )
+    #print( shouldBeClassifiedAs )
+    
+    if(is.character(classifiedAs))
+    { # "categorical"
+      if(!(shouldBeClassifiedAs == classifiedAs))
+      {
+        log("     missed!", printLog = printLog)
+        error <<- error + 1
+      }
+    }
+    else if(is.numeric(classifiedAs))
+    { # "continuous"
+      #print((classifiedAs - shouldBeClassifiedAs)^2)
+      error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
+      #print(error)
+    }
+    else
+    { # just in case
+      stop("Error. Unknown rule classification variable type.")
+    }
+    
+  })
+  
+  # compute classification error
+  if(overallNumberOfClassificationsDone > 0L)
+  {
+    error <- error/overallNumberOfClassificationsDone    
+  }
+  
+  return (error)
 }
 
 

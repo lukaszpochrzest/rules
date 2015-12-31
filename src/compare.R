@@ -29,9 +29,10 @@ compareDataset <- function( filePrefix )
   
   # Extract column names form datasets and create formula
   colNames <- colnames( rpartTrainingDataFrame )
-  attribNames <- colNames[-length(colNames)]
+  #attribNames <- colNames[-length(colNames)]
   className <- colNames[length(colNames)]
-  rpartFormula <- as.formula( paste(className, paste(attribNames, collapse=" + "), sep=" ~ ") )
+  #rpartFormula <- as.formula( paste(className, paste(attribNames, collapse=" + "), sep=" ~ ") )
+  rpartFormula <- as.formula(paste("as.factor(", className, ") ~ ."))
   
   # Building bayes model
   modelBayes <- naiveBayes( formula = rpartFormula, data = rpartTrainingDataFrame )
@@ -71,10 +72,14 @@ bayesTest <- function( filePrefix )
   colNames <- colnames( rpartTrainingDataFrame )
   attribNames <- colNames[-length(colNames)]
   className <- colNames[length(colNames)]
-  rpartFormula <- as.formula( paste(className, paste(attribNames, collapse=" + "), sep=" ~ ") )
+  #className <- as.factor( className )
+  #rpartFormula <- as.formula( paste( className, paste(attribNames, collapse=" + "), sep=" ~ ") )
+  attribString <- paste(attribNames, collapse=" + ")
+  rpartFormula <- as.formula(paste("as.factor(", className, ") ~ ", attribString ))
   
   # Building bayes model
   modelBayes <- naiveBayes( formula = rpartFormula, data = rpartTrainingDataFrame )
+  #print( rpartFormula )
   
   bayesError(model = modelBayes, dataset = rpartTestDataFrame)
 }
