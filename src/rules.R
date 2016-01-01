@@ -432,6 +432,10 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
   if (!inherits(ruleSet, "ruleset")) stop("Not a legitimate \"ruleset\" object")
   ruleList <- ruleSet$ruleList
   trainingDataFrame <- ruleSet$trainingDataFrame
+  
+  # strip training data from rows with NaN values
+  trainingDataFrame <- trainingDataFrame[complete.cases(trainingDataFrame),]
+  
   ruleListPruned <- lapply(ruleList, function(x)
     {
       log("----------------------------------------------------------------", printLog)
@@ -650,7 +654,8 @@ predict.ruleset <- function(object, newdata, printLog,
   ruleList <- object$ruleList
   trainingDataFrame <- object$trainingDataFrame
   
-  toBeClassifiedDataFrame <- newdata
+  #strip data from rows with NaN values
+  toBeClassifiedDataFrame <- newdata[complete.cases(newdata),]
   
   # find out how many samples from training set is covered by each rule
   rulesCoveredSamplesCount <- sapply(ruleList, function(x)
@@ -757,6 +762,7 @@ predict.ruleset <- function(object, newdata, printLog,
   }
   
   log("----------------------------------------------------------------", printLog = printLog)
+  log(paste("Stripped samples count: ", nrow(newdata) - nrow(toBeClassifiedDataFrame) ), printLog = printLog)
   log(paste("Classifications done count: ", overallNumberOfClassificationsDone), printLog = printLog)
   log(paste("Misclassified factor / mse: ", error), printLog = printLog)
   log(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
