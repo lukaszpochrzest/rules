@@ -47,8 +47,9 @@
 #   rpartNurseryTrainingDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/nursery/sets_divided/nursery_data.csv.training", header = TRUE, sep = ",")
 #   rpartNurseryPruningDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/nursery/sets_divided/nursery_data.csv.pruning", header = TRUE, sep = ",")
 #   #rpartNurseryInputDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/nursery/nursery_data.csv", header = TRUE, sep = ",")
-#
-#   rpartNurseryTrainingSetDataTreeObject <- rpart(cp = 0, method = "class", data = rpartNurseryTrainingDataFrame, formula = nursery ~ parents + has_nurs + form + children + housing + finance + social + health)
+#   
+#   #cp = 0, 
+#   rpartNurseryTrainingSetDataTreeObject <- rpart(method = "class", data = rpartNurseryTrainingDataFrame, formula = nursery ~ parents + has_nurs + form + children + housing + finance + social + health)
 #
 #   plot(rpartNurseryTrainingSetDataTreeObject, uniform = TRUE)
 #   text(rpartNurseryTrainingSetDataTreeObject, all = FALSE, use.n = TRUE, cex = 0.75)
@@ -130,17 +131,17 @@ RuleSet <- function(ruleList, trainingDataFrame) {
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 
-check <- function(selector, sample)
+.check <- function(selector, sample)
 {
   UseMethod("check",selector)
 }
 
-check.CategoricalSelector <- function(selector, sample) # sample may be both singular (1 row data frame) or multiple
+.check.CategoricalSelector <- function(selector, sample) # sample may be both singular (1 row data frame) or multiple
 {
   return(sapply(sample[[selector$decisionVariable]], function (x) {any(x == selector$possibleValues)}))
 }
 
-check.ContinuousSelector <- function(selector, sample)  # sample may be both singular (1 row data frame) or multiple
+.check.ContinuousSelector <- function(selector, sample)  # sample may be both singular (1 row data frame) or multiple
 {
   if(selector$relation == ">=")
   {
@@ -155,11 +156,11 @@ check.ContinuousSelector <- function(selector, sample)  # sample may be both sin
     stop(paste("Error. Unknown Continous selector relation ", selector$relation))
   }
 }
-check.Complex <- function(complex, sample)# sample may be both singular (1 row data frame) or multiple, complex ma be both singular(1 selector) or multiple
+.check.Complex <- function(complex, sample)# sample may be both singular (1 row data frame) or multiple, complex ma be both singular(1 selector) or multiple
 {
   selectorCheckResult <- sapply(complex, function(selector)
   {
-    checkResult <- check(selector, sample)
+    checkResult <- .check(selector, sample)
     if(is.vector(checkResult))
     { # in fact.. if sample is single
       checkResult <- matrix(checkResult, ncol = length(checkResult))
@@ -172,9 +173,9 @@ check.Complex <- function(complex, sample)# sample may be both singular (1 row d
   return (apply(selectorCheckResult, 1, function(x) { all(x) }))
 }
 
-check.Rule <- function(rule, sample)
+.check.Rule <- function(rule, sample)
 {
-  return (check(rule$complex,sample))
+  return (.check(rule$complex,sample))
 }
 
 as.character.CategoricalSelector <- function(x, ...)
@@ -251,11 +252,11 @@ print.Rule <- function(x, ...)
 #' print(ruleSet)
 generateRuleSet <- function(object, trainingDataFrame)
 {
-  generatedPaths <- generatePaths(frame = object$frame)
-  return(generateRuleSetUsingPaths(paths = generatedPaths, object = object, trainingDataFrame))
+  generatedPaths <- .generatePaths(frame = object$frame)
+  return(.generateRuleSetUsingPaths(paths = generatedPaths, object = object, trainingDataFrame))
 }
 
-generatePaths <- function(frame)
+.generatePaths <- function(frame)
 {
   is.leaf <- (frame$var == "<leaf>")
   leaves <- as.integer(row.names(frame))[is.leaf]
@@ -285,7 +286,7 @@ generatePaths <- function(frame)
   return(paths)
 }
 
-generateRuleSetUsingPaths <- function(paths, object, trainingDataFrame)
+.generateRuleSetUsingPaths <- function(paths, object, trainingDataFrame)
 {
   variableClassifyOn <- as.character( attr(object$terms,"variables")[[2]] ) #as.character(object$call$formula[[2]])  # variable we are classifing (on?) (:= variable we are trying to guess)
   paths_size <- length(paths)
@@ -437,14 +438,14 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
     {
       log("----------------------------------------------------------------", printLog)
       log("----------------------------------------------------------------", printLog)
-      pruneRule(rule = x, pruningDataFrame = pruningDataFrame, trainingDataFrame = trainingDataFrame, printLog = printLog)
+      .pruneRule(rule = x, pruningDataFrame = pruningDataFrame, trainingDataFrame = trainingDataFrame, printLog = printLog)
     })
   #class(ruleSetPruned) <- "ruleset"
   ruleSetPruned <- RuleSet(ruleList = ruleListPruned, trainingDataFrame = trainingDataFrame)
   return (ruleSetPruned)
 }
 
-pruneRule <- function(rule, pruningDataFrame, trainingDataFrame, debugMaxIters = 0, printLog = FALSE) # use trainingDataFrame to calculate new rule consequent
+.pruneRule <- function(rule, pruningDataFrame, trainingDataFrame, debugMaxIters = 0, printLog = FALSE) # use trainingDataFrame to calculate new rule consequent
 {
   complex <- rule$complex
   complexLength <- length(complex)
@@ -457,7 +458,7 @@ pruneRule <- function(rule, pruningDataFrame, trainingDataFrame, debugMaxIters =
   variableClassifyOn <- rule$consequent$consequentKey
   classifiedAs <- rule$consequent$consequentValue
   
-  prunedComplexError <- computeErrorComplex(complex = prunedComplex, dataFrame = pruningDataFrame, variableClassifyOn = variableClassifyOn, classifiedAs = classifiedAs)
+  prunedComplexError <- .computeErrorComplex(complex = prunedComplex, dataFrame = pruningDataFrame, variableClassifyOn = variableClassifyOn, classifiedAs = classifiedAs)
   
   debugIterationsCount <- 0
   i<-1
@@ -488,7 +489,7 @@ pruneRule <- function(rule, pruningDataFrame, trainingDataFrame, debugMaxIters =
     variableClassifyOn <- rule$consequent$consequentKey
     classifiedAs <- rule$consequent$consequentValue
     
-    prunedComplexTryError <- computeErrorComplex(complex = prunedComplexTry, dataFrame = pruningDataFrame, variableClassifyOn = variableClassifyOn, classifiedAs = classifiedAs)
+    prunedComplexTryError <- .computeErrorComplex(complex = prunedComplexTry, dataFrame = pruningDataFrame, variableClassifyOn = variableClassifyOn, classifiedAs = classifiedAs)
     
     ##
     log(paste("new err vs old: ",prunedComplexTryError, " vs ", prunedComplexError), printLog)
@@ -509,12 +510,12 @@ pruneRule <- function(rule, pruningDataFrame, trainingDataFrame, debugMaxIters =
       if(is.character(classifiedAs))
       {   # "class"
 
-        trainingDataCoveredSamples <- trainingDataFrame[check(prunedComplex, trainingDataFrame), variableClassifyOn]
+        trainingDataCoveredSamples <- trainingDataFrame[.check(prunedComplex, trainingDataFrame), variableClassifyOn]
         classifiedAs <- attr(which.max(table(trainingDataCoveredSamples)), "names")
       }
       else if(is.numeric(classifiedAs))
       {
-        trainingDataCoveredSamples <- trainingDataFrame[check(prunedComplex, trainingDataFrame), variableClassifyOn]
+        trainingDataCoveredSamples <- trainingDataFrame[.check(prunedComplex, trainingDataFrame), variableClassifyOn]
         classifiedAs <- mean(trainingDataCoveredSamples)
       }
       else #just in case
@@ -540,11 +541,11 @@ pruneRule <- function(rule, pruningDataFrame, trainingDataFrame, debugMaxIters =
   return (rule)
 }
 
-computeErrorComplex <- function(complex, dataFrame, variableClassifyOn, classifiedAs) # complex must be single (from single rule)
+.computeErrorComplex <- function(complex, dataFrame, variableClassifyOn, classifiedAs) # complex must be single (from single rule)
 {
   if(is.character(classifiedAs))
   {   # "class"
-    coveredSamplesBool <- check(complex, dataFrame)
+    coveredSamplesBool <- .check(complex, dataFrame)
     #variableClassifyOn <- rule$consequent$consequentKey
     #classifiedAs <- rule$consequent$consequentValue
     coveredSamples <- dataFrame[coveredSamplesBool, variableClassifyOn]
@@ -561,7 +562,7 @@ computeErrorComplex <- function(complex, dataFrame, variableClassifyOn, classifi
   }
   else if(is.numeric(classifiedAs))
   {   # "continuous"
-    coveredSamplesBool <- check(complex, dataFrame)
+    coveredSamplesBool <- .check(complex, dataFrame)
     coveredSamples <- dataFrame[coveredSamplesBool, variableClassifyOn]
     coveredSamplesCount <- length(coveredSamples)
     #log(paste("computeErrorComplex().coveredSamplesCount:",coveredSamplesCount), TRUE)
@@ -657,7 +658,7 @@ predict.ruleset <- function(object, newdata, printLog,
   # find out how many samples from training set is covered by each rule
   rulesCoveredSamplesCount <- sapply(ruleList, function(x)
     {
-      return (sum(check(x, trainingDataFrame)))
+      return (sum(.check(x, trainingDataFrame)))
     })
   
   log(paste("rulesCoveredSamplesCount:", paste(rulesCoveredSamplesCount, collapse = " ")), printLog = printLog)
@@ -668,7 +669,7 @@ predict.ruleset <- function(object, newdata, printLog,
       return (sapply(ruleList, function(rule) 
         {
           #single sample, single rule
-          return (check(rule,sample))
+          return (.check(rule,sample))
         }) )
     })
   
@@ -796,20 +797,20 @@ log <- function(x, printLog = FALSE)
 test <- function()
 {
   # prepare data
-  categoricalTestDataSingle <- categoricalTestDataSingle()
-  categoricalTestDataMultiple <- categoricalTestDataMultiple()
-  continuousTestDataSingle <- continuousTestDataSingle()
-  continuousTestDataMultiple <- continuousTestDataMultiple()
+  categoricalTestDataSingle <- .categoricalTestDataSingle()
+  categoricalTestDataMultiple <- .categoricalTestDataMultiple()
+  continuousTestDataSingle <- .continuousTestDataSingle()
+  continuousTestDataMultiple <- .continuousTestDataMultiple()
   
   # tests
-  continuousSelectorTest(continuousTestDataSingle, continuousTestDataMultiple)
-  categoricalSelectorTest(categoricalTestDataSingle, categoricalTestDataMultiple)
-  categoricalComplexTest(categoricalTestDataSingle, categoricalTestDataMultiple)
+  .continuousSelectorTest(continuousTestDataSingle, continuousTestDataMultiple)
+  .categoricalSelectorTest(categoricalTestDataSingle, categoricalTestDataMultiple)
+  .categoricalComplexTest(categoricalTestDataSingle, categoricalTestDataMultiple)
   
   print("TESTS PASSED SUCCESSFULLY!")
 }
 
-continuousSelectorTest <- function(df.single, df.multiple)
+.continuousSelectorTest <- function(df.single, df.multiple)
 {
   ####################################################################################################################################################################################
   ####################################################################################################################################################################################
@@ -831,7 +832,7 @@ continuousSelectorTest <- function(df.single, df.multiple)
   continuousSelector.sample.single <- ContinuousSelector(decisionVariable = colnames(df.single)[1], cutpoint = df.single[1,2]-1, relation = "<")
 
   # launch tested function
-  testResult <- check(selector = continuousSelector.sample.single, sample = df.single)
+  testResult <- .check(selector = continuousSelector.sample.single, sample = df.single)
   expectedTestResult <- c(TRUE)
   
   # check test results
@@ -846,7 +847,7 @@ continuousSelectorTest <- function(df.single, df.multiple)
   continuousSelector.sample.multiple <- ContinuousSelector(decisionVariable = colnames(df.multiple)[3L], cutpoint = df.multiple[2,3]-1, relation = ">=")
 
   # launch tested function
-  testResult <- check(selector = continuousSelector.sample.multiple, sample = df.multiple)
+  testResult <- .check(selector = continuousSelector.sample.multiple, sample = df.multiple)
   expectedTestResult <- c(FALSE, TRUE)
   
   # check test results
@@ -857,7 +858,7 @@ continuousSelectorTest <- function(df.single, df.multiple)
   
 }
 
-categoricalSelectorTest <-function(df.single, df.multiple)
+.categoricalSelectorTest <-function(df.single, df.multiple)
 {
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
@@ -890,7 +891,7 @@ categoricalSelector.single.sample.single.2 <- CategoricalSelector(decisionVariab
 categoricalSelector.multiple.sample.single <- CategoricalSelector(decisionVariable = colnames(df.single)[2L], possibleValues = c(as.character(df.single[1L, 2L]), fakeData))
 
 # launch tested function
-testResult <- check(selector = categoricalSelector.single.sample.single.1, sample = df.single)
+testResult <- .check(selector = categoricalSelector.single.sample.single.1, sample = df.single)
 expectedTestResult <- TRUE
 
 # check test results
@@ -900,7 +901,7 @@ if(!(all(testResult == expectedTestResult)))
 }
 
 # launch tested function
-testResult <- check(selector = categoricalSelector.single.sample.single.2, sample = df.single)
+testResult <- .check(selector = categoricalSelector.single.sample.single.2, sample = df.single)
 expectedTestResult <- FALSE
 # check test results
 if(!(all(testResult == expectedTestResult)))
@@ -909,7 +910,7 @@ if(!(all(testResult == expectedTestResult)))
 }
 
 # launch tested function
-testResult <- check(selector = categoricalSelector.multiple.sample.single, sample = df.single)
+testResult <- .check(selector = categoricalSelector.multiple.sample.single, sample = df.single)
 expectedTestResult <- TRUE
 
 # check test results
@@ -926,7 +927,7 @@ categoricalSelector.single.sample.multiple <- CategoricalSelector(decisionVariab
 categoricalSelector.multiple.sample.multiple <- CategoricalSelector(decisionVariable = colnames(df.multiple)[1L], possibleValues = c(as.character(df.multiple[1L, 1L]), as.character(df.multiple[3L, 1L])))
 
 # launch tested function
-testResult <- check(selector = categoricalSelector.single.sample.multiple, sample = df.multiple)
+testResult <- .check(selector = categoricalSelector.single.sample.multiple, sample = df.multiple)
 expectedTestResult <- c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE)
 
 # check test results
@@ -936,7 +937,7 @@ if(!(all(testResult == expectedTestResult)))
 }
 
 # launch tested function
-testResult <- check(selector = categoricalSelector.multiple.sample.multiple, sample = df.multiple)
+testResult <- .check(selector = categoricalSelector.multiple.sample.multiple, sample = df.multiple)
 expectedTestResult <- c(TRUE, FALSE, TRUE, FALSE, FALSE, FALSE)
 
 # check test results
@@ -949,7 +950,7 @@ if(!(all(testResult == expectedTestResult) ))
 ####################################################################################################################################################################################
 }
 
-categoricalComplexTest <- function(df.single, df.multiple)
+.categoricalComplexTest <- function(df.single, df.multiple)
 {
   ####################################################################################################################################################################################
   ####################################################################################################################################################################################
@@ -991,7 +992,7 @@ categoricalComplexTest <- function(df.single, df.multiple)
   complex.multiple.2[[2]] <- CategoricalSelector(decisionVariable = colnames(df.multiple)[4L], possibleValues = c(as.character(df.multiple[2L, 4L]), as.character(df.multiple[6L, 4L])))
 
   # launch tested function
-  testResult <- check(complex.single, sample = df.single)
+  testResult <- .check(complex.single, sample = df.single)
   expectedTestResult <- TRUE
   
   # check test results
@@ -1001,7 +1002,7 @@ categoricalComplexTest <- function(df.single, df.multiple)
   }
   
   # launch tested function
-  testResult <- check(complex.multiple, sample = df.single)
+  testResult <- .check(complex.multiple, sample = df.single)
   expectedTestResult <- FALSE
   
   # check test results
@@ -1015,7 +1016,7 @@ categoricalComplexTest <- function(df.single, df.multiple)
   ############################################################################
   
   # launch tested function
-  testResult <- check(complex.single, sample = df.multiple)
+  testResult <- .check(complex.single, sample = df.multiple)
   expectedTestResult <- c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE)
   
   # check test results
@@ -1025,7 +1026,7 @@ categoricalComplexTest <- function(df.single, df.multiple)
   }
   
   # launch tested function
-  testResult <- check(complex.multiple, sample = df.multiple)
+  testResult <- .check(complex.multiple, sample = df.multiple)
   expectedTestResult <- c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)
   
   # check test results
@@ -1035,7 +1036,7 @@ categoricalComplexTest <- function(df.single, df.multiple)
   }
   
   # launch tested function
-  testResult <- check(complex.multiple.2, sample = df.multiple)
+  testResult <- .check(complex.multiple.2, sample = df.multiple)
   expectedTestResult <- c(FALSE, TRUE, FALSE, FALSE, FALSE, FALSE)
   
   # check test results
@@ -1046,7 +1047,7 @@ categoricalComplexTest <- function(df.single, df.multiple)
   
 }
 
-categoricalTestDataSingle <- function()
+.categoricalTestDataSingle <- function()
 {
   df.single.column.names <- c("c1", "c2", "c3", "c4")
   df.single.column.1 <- c("c1.v1")
@@ -1064,7 +1065,7 @@ categoricalTestDataSingle <- function()
   colnames(df.single) <- df.single.column.names
   return(df.single)
 }
-categoricalTestDataMultiple <- function()
+.categoricalTestDataMultiple <- function()
 {
   df.multiple.column.names <- c("c1", "c2", "c3", "c4")
   df.multiple.column.1 <- c("c1.v1", "c1.v2", "c1.v3", "c1.v4", "c1.v5", "c1.v6")
@@ -1082,7 +1083,7 @@ categoricalTestDataMultiple <- function()
   colnames(df.multiple) <- df.multiple.column.names
   return(df.multiple)
 }
-continuousTestDataSingle <- function()
+.continuousTestDataSingle <- function()
 {
   df.single.column.names <- c("c1", "c2", "c3", "c4")
   df.single.column.1 <- c(1.1)
@@ -1100,7 +1101,7 @@ continuousTestDataSingle <- function()
   colnames(df.single) <- df.single.column.names
   return(df.single)
 }
-continuousTestDataMultiple <- function()
+.continuousTestDataMultiple <- function()
 {
   df.multiple.column.names <- c("c1", "c2", "c3", "c4")
   df.multiple.column.1 <- c(1.1, 11.1)
