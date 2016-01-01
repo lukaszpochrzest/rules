@@ -75,7 +75,7 @@ require(rpart)
 #############################################                                                                             ##########################################################
 #############################################                            CLASS DEFINITIONS                                ##########################################################
 #############################################                                                                             ##########################################################
-#############################################            CategoricalSelector, ContinuousSelector, Complex and Rule        ##########################################################
+#############################################     CategoricalSelector, ContinuousSelector, Complex , Rule and RuleSet     ##########################################################
 #############################################                                                                             ##########################################################
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
@@ -243,8 +243,7 @@ print.Rule <- function(x, ...)
 
 #' Generates set of rules from a rpart object.
 #'
-#' @param object An rpart object
-#' @param trainingDataFrame Data frame that was used to build a \code{object}
+#' @param object An \code{rpart} object
 #' @return Generated set of rules
 #' @examples
 #' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
@@ -421,7 +420,6 @@ prune <- function(ruleSet, ...)
 #'
 #' @param ruleSet Set of rules to prune
 #' @param pruningDataFrame Data used to prune rules
-#' @param trainingDataFrame Data that was used to train source rpart model
 #' @param printLog Boolean value tells whether to print additinal information while pruning rules or not
 #' @return Pruned rule set
 #' @examples
@@ -631,9 +629,8 @@ predict <- function(object, ...)
 #'
 #' @param object RuleSet object used to predict. This is assumed to be the result of either \code{generateRuleSet} or \code{pruneRuleSet} function.
 #' @param newdata Data frame containing the values at which predictions are required. The predictors referred to in the right side of formula(object) must be present by name in newdata. If missing, the fitted values are returned
-#' @param trainingDataFrame Data that was used to train source rpart model
 #' @param printLog Boolean value tells whether to print additinal information while predicting or not
-#' @return vetor of predicted responses
+#' @return vector of predicted responses
 #' @examples
 #' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
 #' ruleSet <- generateRuleSet(fit)
