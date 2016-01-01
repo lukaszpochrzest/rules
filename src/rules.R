@@ -674,8 +674,9 @@ predict.ruleset <- function(object, newdata, trainingDataFrame, printLog,
     
     log(paste("     should be classified as ", shouldBeClassifiedAs, ", classified as ", classifiedAs), printLog = printLog)
     
-    if(is.character(classifiedAs))
+    if( is.factor(classifiedAs) || is.character(classifiedAs))
     { # "categorical"
+      print("class")
       if(!(shouldBeClassifiedAs == classifiedAs))
       {
         log("     missed!", printLog = printLog)
@@ -686,7 +687,7 @@ predict.ruleset <- function(object, newdata, trainingDataFrame, printLog,
     { # "continuous"
       #print((classifiedAs - shouldBeClassifiedAs)^2)
       error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
-      #print(error)
+      print("anova")
     }
     else
     { # just in case

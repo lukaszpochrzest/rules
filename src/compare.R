@@ -39,19 +39,9 @@ compareDataset <- function( filePrefix )
   # Regression or classification
   classExample <- rpartTrainingDataFrame[ 2, length(colNames) ]
   
-  if( is.numeric(classExample))
-    useMethod <- "anova"
-  else
-  {
-    useMethod <- "class"
-  }
-  
-  print( classExample )
-  print( useMethod )
-  
   # Building bayes model
   modelBayes <- naiveBayes( formula = bayesFormula, data = rpartTrainingDataFrame )
-  modelRpart <- rpart(cp = 0, method = useMethod, data =  rpartTrainingDataFrame, rpartFormula )
+  modelRpart <- rpart(cp = 0, data =  rpartTrainingDataFrame, rpartFormula )
   
 
   # Rpart RULE SET GENERATION
@@ -63,7 +53,7 @@ compareDataset <- function( filePrefix )
   error2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame, trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
   error3 <- bayesError(model = modelBayes, dataset = rpartTestDataFrame)
   
-  return ( list(error1,error2,error3, method = useMethod) )
+  return ( list(error1,error2,error3 ) )
 }
 
 ## Function makes the same as compareDataset but only for bayes

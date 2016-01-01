@@ -64,21 +64,21 @@ bayesError <- function( model, dataset )
     classifiedAs <- sample[1]
     shouldBeClassifiedAs <- sample[2]
     
-    if(is.character(classifiedAs))
-    { # "categorical"
+    
+    if(is.factor(classifiedAs) || is.character(classifiedAs))
+    {# "categorical"
+      
+      #print( "class" )
       if(!(shouldBeClassifiedAs == classifiedAs))
       {
-        log("     missed!", printLog = printLog)
         error <<- error + 1
       }
     }
-    else if(is.numeric(classifiedAs))
-    { # "continuous"
-      error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
-    }
     else
-    { # just in case
-      stop("Error. Unknown rule classification variable type.")
+    { # "continuous"
+      
+      print( "anova" )
+      error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
     }
     
   })
