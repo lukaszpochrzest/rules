@@ -43,7 +43,7 @@ logAll <- function( value1, value2, printLog = FALSE )
   }
 }
 
-bayesError <- function( model, dataset )
+bayesError <- function( model, dataset, method )
 {
   realClasses <- dataset[,ncol(dataset)]
   toClassify <- dataset[,1:( ncol(dataset) - 1 )]
@@ -65,20 +65,24 @@ bayesError <- function( model, dataset )
     shouldBeClassifiedAs <- sample[2]
     
     
-    if(is.factor(classifiedAs) || is.character(classifiedAs))
+    if( method == "class" )
     {# "categorical"
       
-      #print( "class" )
+      print( "class" )
       if(!(shouldBeClassifiedAs == classifiedAs))
       {
         error <<- error + 1
       }
     }
-    else
+    else if( method == "anova" )
     { # "continuous"
       
-      #print( "anova" )
+      print( "anova" )
       error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
+    }
+    else
+    {
+      print("Unknown method")
     }
     
   })

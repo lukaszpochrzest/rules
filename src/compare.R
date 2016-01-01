@@ -51,7 +51,7 @@ compareDataset <- function( filePrefix )
 
   error1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame, trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
   error2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame, trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
-  error3 <- bayesError(model = modelBayes, dataset = rpartTestDataFrame)
+  error3 <- bayesError(model = modelBayes, dataset = rpartTestDataFrame, modelRpart$method )
   
   return ( list(error1,error2,error3 ) )
 }
