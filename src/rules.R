@@ -234,6 +234,14 @@ print.Rule <- function(x, ...)
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 
+#' Generates set of rules from a rpart object.
+#'
+#' @param object An rpart object
+#' @return Generated set of rules
+#' @examples
+#' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+#' ruleSet <- generateRuleSet(fit)
+#' print(ruleSet)
 generateRuleSet <- function(object)
 {
   generatedPaths <- generatePaths(frame = object$frame)
@@ -396,7 +404,18 @@ generateRuleSetUsingPaths <- function(paths,object)
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 
-
+#' Prunes rule set
+#'
+#' @param ruleSet Set of rules to prune
+#' @param pruningDataFrame Data used to prune rules
+#' @param trainingDataFrame Data that was used to train source rpart model
+#' @param printLog Boolean value tells whether to print additinal information while pruning rules or not
+#' @return Pruned rule set
+#' @examples
+#' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+#' ruleSet <- generateRuleSet(fit)
+#' prunedRuleSet <- pruneRuleSet(ruleSet, kyphosis, kyphosis)
+#' print(prunedRuleSet)
 pruneRuleSet <- function(ruleSet, pruningDataFrame, trainingDataFrame, printLog = FALSE)
 {
   ruleSetPruned <- lapply(ruleSet, function(x)
@@ -586,6 +605,18 @@ computeErrorComplex <- function(complex, dataFrame, variableClassifyOn, classifi
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 
+#' Returns a vector of predicted responses from a ruleSet object.
+#'
+#' @param object RuleSet object used to predict. This is assumed to be the result of either \code{generateRuleSet} or \code{pruneRuleSet} function.
+#' @param newdata Data frame containing the values at which predictions are required. The predictors referred to in the right side of formula(object) must be present by name in newdata. If missing, the fitted values are returned
+#' @param trainingDataFrame Data that was used to train source rpart model
+#' @param printLog Boolean value tells whether to print additinal information while predicting or not
+#' @return vetor of predicted responses
+#' @examples
+#' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+#' ruleSet <- generateRuleSet(fit)
+#' prediction <- predict(ruleSet)
+#' print(prediction)
 predict.ruleset <- function(object, newdata, trainingDataFrame, printLog,
                           #type = c("vector", "prob", "class", "matrix"), na.action = na.pass,
                           ...)
