@@ -1,4 +1,4 @@
-#trzeba ustawiæ w pliku naiveBayes.R libDir, ¿eby to jakoœ z sensem œmieci³o
+#trzeba ustawiÄ‡ w pliku naiveBayes.R libDir, Å¼eby to jakoÅ› z sensem Å›mieciÅ‚o
 
 workingDir <- "D:/ProgramyINNE/rpartRules/src/"
 setwd( workingDir )
@@ -45,12 +45,12 @@ compareDataset <- function( filePrefix )
   
 
   # Rpart RULE SET GENERATION
-  rpartRuleSet <- generateRuleSet(object = modelRpart)
-  rpartRuleSetPruned <- pruneRuleSet(ruleSet = rpartRuleSet, trainingDataFrame = rpartTrainingDataFrame, pruningDataFrame = rpartPruningDataFrame, printLog = FALSE)
+  rpartRuleSet <- generateRuleSet(object = modelRpart, trainingDataFrame = rpartTrainingDataFrame)
+  rpartRuleSetPruned <- pruneRuleSet(ruleSet = rpartRuleSet, pruningDataFrame = rpartPruningDataFrame, printLog = FALSE)
   
 
-  error1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame, trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
-  error2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame, trainingDataFrame = rpartTrainingDataFrame, printLog = FALSE)
+  error1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame, printLog = FALSE)
+  error2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame, printLog = FALSE)
   error3 <- bayesError(model = modelBayes, dataset = rpartTestDataFrame, modelRpart$method )
   
   return ( list(error1,error2,error3 ) )

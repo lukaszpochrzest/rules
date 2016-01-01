@@ -7,14 +7,14 @@ rpartWineTestDataFrame <- read.csv(file = "datasets/winequality.test", header = 
 rpartWineTrainingSetDataTreeObject <- rpart(cp = 0, method = "anova", data =  rpartWineTrainingDataFrame, formula = quality ~ fixed.acidity + volatile.acidity + citric.acid + residual.sugar + chlorides + free.sulfur.dioxide + total.sulfur.dioxide + density + pH + sulphates + alcohol)
 
 # RULE SET GENERATION
-rpartWineTrainingDataRuleSet <- generateRuleSet(object = rpartWineTrainingSetDataTreeObject)
+rpartWineTrainingDataRuleSet <- generateRuleSet(object = rpartWineTrainingSetDataTreeObject, trainingDataFrame = rpartWineTrainingDataFrame)
 
 # RULE SET PRUNING
-rpartWineDataRuleSetPruned <- pruneRuleSet(ruleSet = rpartWineTrainingDataRuleSet, pruningDataFrame = rpartWinePruningDataFrame, trainingDataFrame = rpartWineTrainingDataFrame, printLog = FALSE)
+rpartWineDataRuleSetPruned <- pruneRuleSet(ruleSet = rpartWineTrainingDataRuleSet, pruningDataFrame = rpartWinePruningDataFrame, printLog = FALSE)
 
 # CLASSIFICATION AND ERROR COMPUTATION #need some new "real data" set, pruning data set slice used temporarily instead
-error1 <- predict(ruleSet = rpartWineTrainingDataRuleSet, toBeClassifiedDataFrame = rpartWineTestDataFrame[1:5,], trainingDataFrame = rpartWineTrainingDataFrame, printLog = FALSE)
-error2 <- predict(ruleSet = rpartWineDataRuleSetPruned, toBeClassifiedDataFrame = rpartWineTestDataFrame[1:5,], trainingDataFrame = rpartWineTrainingDataFrame, printLog = FALSE)
+error1 <- predict(object= rpartWineTrainingDataRuleSet, newdata = rpartWineTestDataFrame[1:5,], printLog = FALSE)
+error2 <- predict(object = rpartWineDataRuleSetPruned, newdata = rpartWineTestDataFrame[1:5,], printLog = FALSE)
 
 #modelBayes <- naiveBayes(quality ~ ., data = rpartWineTrainingDataFrame, laplace = 3)
 #bayesPrediction <- predict( modelBayes, rpartWineTestDataFrame[,-ncol(rpartWineTestDataFrame)] )
