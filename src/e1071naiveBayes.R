@@ -77,7 +77,7 @@ bayesError <- function( model, dataset )
     else
     { # "continuous"
       
-      print( "anova" )
+      #print( "anova" )
       error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
     }
     
