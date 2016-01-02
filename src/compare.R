@@ -46,7 +46,7 @@ compareDataset <- function( filePrefix )
 
   # Rpart RULE SET GENERATION
   rpartRuleSet <- generateRuleSet(object = modelRpart, trainingDataFrame = rpartTrainingDataFrame)
-  rpartRuleSetPruned <- pruneRuleSet(ruleSet = rpartRuleSet, pruningDataFrame = rpartPruningDataFrame, printLog = FALSE)
+  rpartRuleSetPruned <- prune(ruleSet = rpartRuleSet, pruningDataFrame = rpartPruningDataFrame, printLog = FALSE)
   
 
   error1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame, printLog = FALSE)
