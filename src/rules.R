@@ -133,7 +133,7 @@ RuleSet <- function(ruleList, trainingDataFrame) {
 
 .check <- function(selector, sample)
 {
-  UseMethod("check",selector)
+  UseMethod(".check",selector)
 }
 
 .check.CategoricalSelector <- function(selector, sample) # sample may be both singular (1 row data frame) or multiple
@@ -638,7 +638,7 @@ predict <- function(object, ...)
 #' @examples
 #' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
 #' ruleSet <- generateRuleSet(fit)
-#' prediction <- predict(ruleSet)
+#' prediction <- predict(objec = ruleSet, newdata = kyphosis)
 #' print(prediction)
 predict.ruleset <- function(object, newdata, printLog,
                           #type = c("vector", "prob", "class", "matrix"), na.action = na.pass,
@@ -721,6 +721,7 @@ predict.ruleset <- function(object, newdata, printLog,
     if(winningRuleIndex < 1L)
     { # this sample wasnt classified (no rule covered the sample)
       nonClassfiedSamplesCount <<- nonClassfiedSamplesCount + 1
+      return (NaN)
     }
     
     overallNumberOfClassificationsDone <<- overallNumberOfClassificationsDone + 1
@@ -767,11 +768,62 @@ predict.ruleset <- function(object, newdata, printLog,
   log(paste("Misclassified factor / mse: ", error), printLog = printLog)
   log(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
   
-
-  return (error)
-  
-  
+  return (list(predictions = result, error = error))
 }
+
+
+####################################################################################################################################################################################
+####################################################################################################################################################################################
+#############################################                                                                             ##########################################################
+#############################################                             COMPUTE ERROR                                   ##########################################################
+#############################################                                                                             ##########################################################
+####################################################################################################################################################################################
+####################################################################################################################################################################################
+
+#.computeErrorInternal <- function(predictions, realValues)
+#{
+#  # args check
+#  realValuesLength = length(realValues)
+#  if(realValuesLength != length(predictions))
+#  {
+#    stop("There has to be equal number of both predictions and real values")
+#  }
+#  if(realValuesLength < 1)
+#  {
+#    return (0)
+#  }
+#  
+#  # check realValues type
+#  type <- "annova"
+#  realValueExample <- realValues[0]
+#  if(is.character(realValueExample))
+#  {
+#    type <- "class"
+#  }
+#  
+#  # compute error
+#  error <- 0
+#  if(type == "annova")
+#  {
+#    apply(realValues, 1, function(realValue) {  # for each of data sample
+#      # compute error - mse numerator
+#      error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
+#    })    
+#  }
+#  else  # class
+#  {
+#    apply(realValues, 1, function(realValue) {  # for each of data sample
+#      # compute error - number of prediction errors
+#      error <<- error + 1
+#    })    
+#  }
+#
+#  # divide error numerator by number of samples
+#  error <- error/realValuesLength
+#
+#  return (error)
+#}
+
 
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################

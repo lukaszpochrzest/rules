@@ -49,8 +49,11 @@ compareDataset <- function( filePrefix )
   rpartRuleSetPruned <- pruneRuleSet(ruleSet = rpartRuleSet, pruningDataFrame = rpartPruningDataFrame, printLog = FALSE)
   
 
-  error1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame, printLog = FALSE)
-  error2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame, printLog = FALSE)
+  predict1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame, printLog = FALSE)
+  predict2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame, printLog = FALSE)
+  
+  error1 <- predict1$error
+  error2 <- predict2$error
   error3 <- bayesError(model = modelBayes, dataset = rpartTestDataFrame, modelRpart$method )
   
   return ( list(error1,error2,error3 ) )
