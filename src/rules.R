@@ -273,13 +273,20 @@ generateRuleSet <- function(object, trainingDataFrame)
       break;
     }
     
-    for(i in 1: leaves_size)
-    {
+    sapply(1:leaves_size, function(i) {
       if(parents[i]>0)
       {
-        paths[[i]] <- append(paths[[i]],parents[i])     
+        paths[[i]] <<- append(paths[[i]],parents[i])
       }
-    }
+    })
+    
+    #for(i in 1: leaves_size)
+    #{
+    #  if(parents[i]>0)
+    #  {
+    #    paths[[i]] <- append(paths[[i]],parents[i])     
+    #  }
+    #}
     
   }
   return(paths)
@@ -851,6 +858,8 @@ log <- function(x, printLog = FALSE)
 
 test <- function()
 {
+  ##  TEST1
+  
   # prepare data
   categoricalTestDataSingle <- .categoricalTestDataSingle()
   categoricalTestDataMultiple <- .categoricalTestDataMultiple()
@@ -862,6 +871,27 @@ test <- function()
   .categoricalSelectorTest(categoricalTestDataSingle, categoricalTestDataMultiple)
   .categoricalComplexTest(categoricalTestDataSingle, categoricalTestDataMultiple)
   
+  ##  TEST2
+  
+  # prepare data
+  training_data <- as.data.frame(matrix( c( "c1Z", "c2Z", "c3Z", "c4Z",
+                                            "c1Z", "c2Y", "c3Z", "c4Z",
+                                            "c1Z", "c2Y", "c3Z", "c4Z",
+                                            "c1Z", "c2Y", "c3Y", "c4Y",
+                                            "c1X", "c2Y", "c3Z", "c4X"), nrow=5, ncol=4, byrow = TRUE))
+  
+  names(training_data) <- c("c1", "c2", "c3", "c4")
+
+  complex <- Complex()
+  complex[[1]] <- CategoricalSelector(decisionVariable = "c1", possibleValues = c("c1Z"))
+  complex[[2]] <- CategoricalSelector(decisionVariable = "c2", possibleValues = c("c2Y"))
+  ruleList <- list(Rule(complex = complex, consequent = Consequent(consequentKey = "c4", consequentValue = "c4Z")))
+  ruleSet <- RuleSet(trainingDataFrame = training_data, ruleList = ruleList)
+  
+  ruleSetPruned <- prune.ruleset(ruleSet = ruleSet, pruningDataFrame = training_data, printLog = TRUE)
+  if(length(ruleSetPruned$ruleList)!=1){
+    stop("test 2 failed")
+  }
   print("TESTS PASSED SUCCESSFULLY!")
 }
 
