@@ -22,6 +22,12 @@ rpartError <- function( rpartModel, testData )
     #print( predictions )
     realValues <- testData[,ncol(testData)]
     
+    #realLevels <- levels( realValues )
+    #predictionsLevels <- levels( predictions )
+    
+    
+    predictions <- factor( predictions, levels = levels( realValues ) )
+    
     error <- sum( realValues != predictions )
     error <- error / nrow( testData )
     return (error)

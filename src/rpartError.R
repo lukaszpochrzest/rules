@@ -3,8 +3,8 @@ source("compare.R")
 
 rulesError <- function()
 {
-  #dataList <- list( "datasets/winequality", "datasets/spambase", "datasets/nursery1", "datasets/nursery2","datasets/nursery3" )
-  dataList <- list( "datasets/winequality" )
+  dataList <- list( "datasets/winequality", "datasets/spambase", "datasets/nursery1", "datasets/nursery2","datasets/nursery3" )
+  #dataList <- list( "datasets/winequality" )
   errors <- computeErrorForDatasets( dataList )
   print( errors )
 }
@@ -23,6 +23,9 @@ computeErrorForDatasets <- function( datasetsList )
   }
   
   errorMatrix = do.call(cbind, errorList)
+  
+  datasetsNamesArray <- as.array( datasetsList )
+  colnames( datasetsNamesArray )
   
   return( errorMatrix )
 }
