@@ -3,7 +3,8 @@ source("compare.R")
 
 rulesError <- function()
 {
-  dataList <- list( "datasets/winequality", "datasets/spambase", "datasets/nursery1", "datasets/nursery2","datasets/nursery3" )
+  #dataList <- list( "datasets/winequality", "datasets/spambase", "datasets/nursery1", "datasets/nursery2","datasets/nursery3" )
+  dataList <- list( "datasets/nursery1" )
   errors <- computeErrorForDatasets( dataList )
   print( errors )
 }
