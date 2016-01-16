@@ -93,6 +93,8 @@ bayesError <- function( model, dataset, method )
     error <- error/overallNumberOfClassificationsDone    
   }
   
+  names( error ) <- c("bayes error")
+  
   return (error)
 }
 

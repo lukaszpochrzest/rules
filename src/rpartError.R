@@ -11,13 +11,15 @@ rulesError <- function()
 
 computeErrorForDatasets <- function( datasetsList )
 {
-  errorList <- numeric()
+  errorList <- list()
   for( dataset in datasetsList )
   {
-    errorList <- append( errorList, compareDataset( dataset ) )
+    errorList <- append( errorList, list( compareDataset( dataset ) ) )
   }
   
-  return( errorList )
+  errorMatrix = do.call(cbind, errorList)
+  
+  return( errorMatrix )
 }
 
 rulesError()
