@@ -68,7 +68,7 @@ bayesError <- function( model, dataset, method )
     if( method == "class" )
     {# "categorical"
       
-      print( "class" )
+      #print( "class" )
       if(!(shouldBeClassifiedAs == classifiedAs))
       {
         error <<- error + 1
@@ -77,7 +77,7 @@ bayesError <- function( model, dataset, method )
     else if( method == "anova" )
     { # "continuous"
       
-      print( "anova" )
+      #print( "anova" )
       error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
     }
     else
