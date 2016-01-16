@@ -24,8 +24,15 @@ computeErrorForDatasets <- function( datasetsList )
   
   errorMatrix = do.call(cbind, errorList)
   
-  datasetsNamesArray <- as.array( datasetsList )
-  colnames( datasetsNamesArray )
+  
+  datasetsNamesArray <- c()
+  for( datasetName in datasetsList )
+  {
+    datasetsNamesArray <- c( datasetsNamesArray, datasetName )
+  }
+  
+
+  colnames( errorMatrix ) <- datasetsNamesArray
   
   return( errorMatrix )
 }
