@@ -29,11 +29,39 @@ rpartCompare <- function( trainData, pruneData, testData, rpartFormula, cp)
   return( list( rpartMethod = modelRpart$method, errorArray = resultError ) )
 }
 
+
+##
+##
 rpartError <- function( rpartModel, testData )
 {
-  error <- sum( testData[,ncol(testData)] != predict( rpartModel, testData, type="c") )
-  error <- error / nrow( testData )
-  return (error)
+  if( rpartModel$method == "class" )
+  {# "categorical"
+    
+    predictions <- predict( rpartModel, newdata = testData, type = "class" )
+    #print( predictions )
+    realValues <- testData[,ncol(testData)]
+    
+    error <- sum( realValues != predictions )
+    error <- error / nrow( testData )
+    return (error)
+    
+  }
+  else if( rpartModel$method == "anova" )
+  { # "continuous"
+    
+    predictions <- predict( rpartModel, newdata = testData )
+    #print( predictions )
+    realValues <- testData[,ncol(testData)]
+    
+    error <- sum( ( realValues - predictions )^2 )
+    error <- error / ( nrow( testData ) + 1 )
+    return (error)
+    
+  }
+  else
+  {
+    print("Unknown method")
+  }
 }
 
 
@@ -45,14 +73,17 @@ rpartCompareCP <- function ( trainData, pruneData, testData, rpartFormula, cpArr
   modelRpart <- rpart( minsplit = minSplit, minbucket = minBucket, cp = 0, data =  trainData, formula = rpartFormula )
   
   resultError <- c()
+  resultNames <- c()
   
   for( cpParam in cpArray )
   {
     modelN <- prune( modelRpart, cp = cpParam )
     resultError <- c( resultError, rpartError( modelN, testData ) )
+    resultNames <- c( resultNames, paste("rpart cp=", cpParam, " minSplit=", minSplit, "minBucket=", minBucket ) ) 
   }
+  names( resultError ) <- resultNames
   
-  return( list( errorArray = resultError ) )
+  return( resultError )
 }
 
 
@@ -60,7 +91,7 @@ rpartCompareCP <- function ( trainData, pruneData, testData, rpartFormula, cpArr
 ##  Compares datasets and returns list of errors
 ##
 ##
-compareDataset <- function( filePrefix )
+compareDataset <- function( filePrefix, cpList, minSplitsBuckets )
 {
   # Make datasets files names from prefix set in parameter
   trainingFilePostfix <- paste( filePrefix, ".training", sep = "" )
@@ -109,15 +140,16 @@ compareDataset <- function( filePrefix )
   #result5 <- rpartCompare( rpartTrainingDataFrame, rpartPruningDataFrame, rpartTestDataFrame, rpartFormula, 0.13)
   
   # Test rpart with other parameters
-  cpList <- c( 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.3, 0.05, 0.7, 0.1 ) #, 0.5 )
-  
-  result0 <- rpartCompareCP( rpartTrainingDataFrame, rpartPruningDataFrame, rpartTestDataFrame, rpartFormula, cpList, 6, 2)
-  
-  #error1 <- predict1$error
-  #error2 <- predict2$error
+  result <- c()
+  for( param in minSplitsBuckets )
+  {
+    resultTemp <- rpartCompareCP( rpartTrainingDataFrame, rpartPruningDataFrame, rpartTestDataFrame, rpartFormula, cpList, param[1], param[2])
+    result <- c( result, resultTemp )
+  }
+
   errorBayes <- bayesError(model = modelBayes, dataset = rpartTestDataFrame, modelRpart$method )
   
-  return ( c(errorBayes, predict1$error, predict2$error, result0$errorArray ) )
+  return ( c(errorBayes, predict1$error, predict2$error, result ) )
   #return ( c(errorBayes, result0$errorArray, result1$errorArray, result2$errorArray, result3$errorArray, result4$errorArray, result5$errorArray) )
   #return ( list(errorBayes, error1, error2 ) )
 }
