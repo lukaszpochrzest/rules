@@ -9,25 +9,6 @@ source("rules.R")
 loadBayesLibs()
 
 
-##
-##
-rpartCompare <- function( trainData, pruneData, testData, rpartFormula, cp)
-{
-  modelRpart <- rpart(cp = cp, data =  trainData, formula = rpartFormula )
-  
-  # Rpart RULE SET GENERATION
-  rpartRuleSet <- generateRuleSet( object = modelRpart, trainingDataFrame = trainData )
-  rpartRuleSetPruned <- prune( ruleSet = rpartRuleSet, pruningDataFrame = pruneData, printLog = FALSE)
-  
-  predict1 <- predict( object = rpartRuleSet, newdata = testData, printLog = FALSE)
-  predict2 <- predict( object = rpartRuleSetPruned, newdata = testData, printLog = FALSE)
-  #predict3 <- predict( object = modelRpart, newdata = testData, type = "class")
-  
-  resultError <- c( predict1$error, predict2$error )    #pureRpart = predict3
-  names( resultError ) <- c( "ruleSet", "prunedRuleSet")
-  
-  return( list( rpartMethod = modelRpart$method, errorArray = resultError ) )
-}
 
 
 ##
@@ -132,13 +113,6 @@ compareDataset <- function( filePrefix, cpList, minSplitsBuckets )
   names( predict1$error ) <- c("rule set")
   names( predict2$error ) <- c("rule set pruned")
   
-  #result0 <- rpartCompare( rpartTrainingDataFrame, rpartPruningDataFrame, rpartTestDataFrame, rpartFormula, 0)
-  #result1 <- rpartCompare( rpartTrainingDataFrame, rpartPruningDataFrame, rpartTestDataFrame, rpartFormula, 0.01)
-  #result2 <- rpartCompare( rpartTrainingDataFrame, rpartPruningDataFrame, rpartTestDataFrame, rpartFormula, 0.04)
-  #result3 <- rpartCompare( rpartTrainingDataFrame, rpartPruningDataFrame, rpartTestDataFrame, rpartFormula, 0.07)
-  #result4 <- rpartCompare( rpartTrainingDataFrame, rpartPruningDataFrame, rpartTestDataFrame, rpartFormula, 0.1)
-  #result5 <- rpartCompare( rpartTrainingDataFrame, rpartPruningDataFrame, rpartTestDataFrame, rpartFormula, 0.13)
-  
   # Test rpart with other parameters
   result <- c()
   for( param in minSplitsBuckets )
@@ -147,11 +121,10 @@ compareDataset <- function( filePrefix, cpList, minSplitsBuckets )
     result <- c( result, resultTemp )
   }
 
+  # Bayes error
   errorBayes <- bayesError(model = modelBayes, dataset = rpartTestDataFrame, modelRpart$method )
   
   return ( c(errorBayes, predict1$error, predict2$error, result ) )
-  #return ( c(errorBayes, result0$errorArray, result1$errorArray, result2$errorArray, result3$errorArray, result4$errorArray, result5$errorArray) )
-  #return ( list(errorBayes, error1, error2 ) )
 }
 
 ## Function makes the same as compareDataset but only for bayes
