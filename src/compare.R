@@ -4,11 +4,11 @@ workingDir <- "D:/ProgramyINNE/rpartRules/src/"
 setwd( workingDir )
 
 source("e1071naiveBayes.R")
-source("rules.R")
+#source("rules.R")
 #installBayes()
 loadBayesLibs()
 
-
+require( rpartRules )
 
 
 ##

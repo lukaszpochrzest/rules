@@ -97,7 +97,7 @@ ContinuousSelector <- function(decisionVariable, cutpoint, relation)
 cmplex <- function()
 {
   me <- list()
-  class(me) <- append(class(me), "Complex")
+  class(me) <- append(class(me), "cmplex")
   return(me)
 }
 
