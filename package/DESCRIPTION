@@ -1,0 +1,9 @@
+Package: rpartRules
+Version: 0.01
+Date: 2016-01-21
+Title: Classification and regression rule set
+Authors@R: c( person("Lukasz", "Pochrzest", role = c("aut", "cre"), email = "luki.super@gmail.com" ), person("Witold", "Dzieciol", role = c("aut") ) )
+Author: Lukasz Pochrzest and Witold Dzieciol
+Depends: R (>= 1.8.0), rpart
+Description: Package creates and prunes classification and regression rule set using rpart tree
+License: GPL (>= 2)
