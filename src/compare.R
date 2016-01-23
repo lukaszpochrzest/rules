@@ -41,7 +41,7 @@ rpartError <- function( rpartModel, testData )
     realValues <- testData[,ncol(testData)]
     
     error <- sum( ( realValues - predictions )^2 )
-    error <- error / ( nrow( testData ) + 1 )
+    error <- error / ( nrow( testData ) )
     return (error)
     
   }

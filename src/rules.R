@@ -22,9 +22,10 @@
 #               ####################### continuous data ########################
 #               ################################################################
 #
-#   rpartWineTrainingDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/winequality/sets_divided/winequality-red.csv.training", header = TRUE, sep = ";")
-#   rpartWinePruningDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/winequality/sets_divided/winequality-red.csv.pruning", header = TRUE, sep = ";")
-#   #rpartWineDataInputDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/winequality/winequality-red.csv", header = TRUE, sep = ";")   
+#   rpartWineTrainingDataFrame <- read.csv(file = "/home/lukasz/programming/mow/repo/src/datasets/winequality.training", header = TRUE, sep = ";")
+#   rpartWinePruningDataFrame <- read.csv(file = "/home/lukasz/programming/mow/repo/src/datasets/winequality.pruning", header = TRUE, sep = ";")
+#   rpartWineTestDataFrame <- read.csv(file = "/home/lukasz/programming/mow/repo/src/datasets/winequality.test", header = TRUE, sep = ";")
+#   #rpartWineDataInputDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/winequality/winequality-red.csv", header = TRUE, sep = ";")
 #
 #   rpartWineTrainingSetDataTreeObject <- rpart(cp = 0, method = "anova", data =  rpartWineTrainingDataFrame, formula = quality ~ fixed.acidity + volatile.acidity + citric.acid + residual.sugar + chlorides + free.sulfur.dioxide + total.sulfur.dioxide + density + pH + sulphates + alcohol)
 #
@@ -38,18 +39,22 @@
 #   rpartWineDataRuleSetPruned <- prune(ruleSet = rpartWineTrainingDataRuleSet, pruningDataFrame = rpartWinePruningDataFrame, printLog = TRUE)
 #
 #   # CLASSIFICATION AND ERROR COMPUTATION #need some new "real data" set, pruning data set slice used temporarily instead
-#   error <- predict(object = rpartWineTrainingDataRuleSet, newdata = rpartWinePruningDataFrame[1:5,], printLog = TRUE)
+#   error <- predict(object = rpartWineTrainingDataRuleSet, newdata = rpartWineTestDataFrame, printLog = TRUE)
+#
+#   # error withou pruning = 0.515719064796118 # sprawdzone z rpart
+#
 #
 #               ################################################################
 #               ######################### discrete data ########################
 #               ################################################################
 #
-#   rpartNurseryTrainingDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/nursery/sets_divided/nursery_data.csv.training", header = TRUE, sep = ",")
-#   rpartNurseryPruningDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/nursery/sets_divided/nursery_data.csv.pruning", header = TRUE, sep = ",")
+#   rpartNurseryTrainingDataFrame <- read.csv(file = "/home/lukasz/programming/mow/repo/src/datasets/nursery.training", header = TRUE, sep = ";")
+#   rpartNurseryPruningDataFrame <- read.csv(file = "/home/lukasz/programming/mow/repo/src/datasets/nursery.pruning", header = TRUE, sep = ";")
+#   rpartNurseryTestDataFrame <- read.csv(file = "/home/lukasz/programming/mow/repo/src/datasets/nursery.test", header = TRUE, sep = ";")
 #   #rpartNurseryInputDataFrame <- read.csv(file = "/home/lukasz/programming/mow/data/nursery/nursery_data.csv", header = TRUE, sep = ",")
-#   
-#   #cp = 0, 
-#   rpartNurseryTrainingSetDataTreeObject <- rpart(method = "class", data = rpartNurseryTrainingDataFrame, formula = nursery ~ parents + has_nurs + form + children + housing + finance + social + health)
+#
+#   #cp = 0,
+#   rpartNurseryTrainingSetDataTreeObject <- rpart(method = "class", data = rpartNurseryTrainingDataFrame, formula = class ~ parents + has_nurs + form + children + housing + finance + social + health)
 #
 #   plot(rpartNurseryTrainingSetDataTreeObject, uniform = TRUE)
 #   text(rpartNurseryTrainingSetDataTreeObject, all = FALSE, use.n = TRUE, cex = 0.75)
@@ -57,11 +62,14 @@
 #   # RULE SET GENERATION
 #   rpartNurseryTrainingDataRuleSet <- generateRuleSet(object = rpartNurseryTrainingSetDataTreeObject, trainingDataFrame = rpartNurseryTrainingDataFrame)
 #
-#   # RULE SET PRUNING
+#   # RULE SET PRUNINGd
 #   rpartNurseryDataRuleSetPruned <- prune(ruleSet = rpartNurseryTrainingDataRuleSet, pruningDataFrame = rpartNurseryPruningDataFrame, printLog = TRUE)
 #
 #   # CLASSIFICATION AND ERROR COMPUTATION #need some new "real data" set, pruning data set slice used temporarily instead
-#   error <- predict(object = rpartNurseryTrainingDataRuleSet, newdata = rpartNurseryPruningDataFrame[1:5,], printLog = TRUE)
+#   error <- predict(object = rpartNurseryTrainingDataRuleSet, newdata = rpartNurseryTestDataFrame, printLog = TRUE)
+#
+#   # error without pruning = 0.121157729414404 # sprawdzone z rpart
+#
 #
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
@@ -75,7 +83,7 @@ require(rpart)
 #############################################                                                                             ##########################################################
 #############################################                            CLASS DEFINITIONS                                ##########################################################
 #############################################                                                                             ##########################################################
-#############################################     CategoricalSelector, ContinuousSelector, Complex , Rule and RuleSet     ##########################################################
+#############################################     CategoricalSelector, ContinuousSelector, cmplex , Rule and RuleSet     ##########################################################
 #############################################                                                                             ##########################################################
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
@@ -94,10 +102,10 @@ ContinuousSelector <- function(decisionVariable, cutpoint, relation)
   return(me)
 }
 
-Complex <- function()
+cmplex <- function()
 {
   me <- list()
-  class(me) <- append(class(me), "Complex")
+  class(me) <- append(class(me), "cmplex")
   return(me)
 }
 
@@ -156,7 +164,7 @@ RuleSet <- function(ruleList, trainingDataFrame) {
     stop(paste("Error. Unknown Continous selector relation ", selector$relation))
   }
 }
-.check.Complex <- function(complex, sample)# sample may be both singular (1 row data frame) or multiple, complex ma be both singular(1 selector) or multiple
+.check.cmplex <- function(complex, sample)# sample may be both singular (1 row data frame) or multiple, complex ma be both singular(1 selector) or multiple
 {
   selectorCheckResult <- sapply(complex, function(selector)
   {
@@ -188,7 +196,7 @@ as.character.ContinuousSelector <- function(x, ...)
   return(paste(x$decisionVariable, x$relation, x$cutpoint))
 }
 
-as.character.Complex <- function(x, ...)
+as.character.cmplex <- function(x, ...)
 {
   return(paste(lapply(x, as.character),collapse = " AND "))
 }
@@ -207,14 +215,14 @@ as.character.Rule <- function(x, ...)
 print.CategoricalSelector <- function(x, ...)
 {
   print(as.character(x))
-} 
+}
 
 print.ContinuousSelector <- function(x, ...)
 {
   print(as.character(x))
 }
 
-print.Complex <- function(x, ...)
+print.cmplex <- function(x, ...)
 {
   print(as.character(x))
 }
@@ -262,8 +270,8 @@ generateRuleSet <- function(object, trainingDataFrame)
   leaves_size <- length(leaves)
   
   paths <- list()
-  paths[1:leaves_size] <- leaves[1:leaves_size] 
-
+  paths[1:leaves_size] <- leaves[1:leaves_size]
+  
   parents <- leaves
   while(1)
   {
@@ -284,7 +292,7 @@ generateRuleSet <- function(object, trainingDataFrame)
     #{
     #  if(parents[i]>0)
     #  {
-    #    paths[[i]] <- append(paths[[i]],parents[i])     
+    #    paths[[i]] <- append(paths[[i]],parents[i])
     #  }
     #}
     
@@ -349,7 +357,7 @@ generateRuleSet <- function(object, trainingDataFrame)
     ####
     ####
     #selectors
-    complex <- Complex()
+    complex <- cmplex()
     for(path_node_iter in 2:path.length)
     {
       node.id <- path[path_node_iter]
@@ -375,9 +383,9 @@ generateRuleSet <- function(object, trainingDataFrame)
         #{
         #  paths_conditions[[i]] <- condition
         #}
-        #else 
+        #else
         #{
-        #  paths_conditions[[i]] <- append(paths_conditions[[i]],condition)  
+        #  paths_conditions[[i]] <- append(paths_conditions[[i]],condition)
         #}
         ##
         
@@ -440,15 +448,20 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
   ruleList <- ruleSet$ruleList
   trainingDataFrame <- ruleSet$trainingDataFrame
   
-  # strip training data from rows with NaN values
-  trainingDataFrame <- trainingDataFrame[complete.cases(trainingDataFrame),]
+  ## strip pruning data from rows with Na values
+  #pruningDataFrame <- pruningDataFrame[complete.cases(pruningDataFrame),]
+  pruningDataFrame <- .strip(pruningDataFrame)
+  
+  ## strip training data from rows with Na values
+  #trainingDataFrame <- trainingDataFrame[complete.cases(trainingDataFrame),]
+  trainingDataFrame <- .strip(trainingDataFrame)
   
   ruleListPruned <- lapply(ruleList, function(x)
-    {
-      log("----------------------------------------------------------------", printLog)
-      log("----------------------------------------------------------------", printLog)
-      .pruneRule(rule = x, pruningDataFrame = pruningDataFrame, trainingDataFrame = trainingDataFrame, printLog = printLog)
-    })
+  {
+    logMsg("----------------------------------------------------------------", printLog)
+    logMsg("----------------------------------------------------------------", printLog)
+    .pruneRule(rule = x, pruningDataFrame = pruningDataFrame, trainingDataFrame = trainingDataFrame, printLog = printLog)
+  })
   #class(ruleSetPruned) <- "ruleset"
   ruleSetPruned <- RuleSet(ruleList = ruleListPruned, trainingDataFrame = trainingDataFrame)
   return (ruleSetPruned)
@@ -489,8 +502,8 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
     prunedComplexTry <- prunedComplex
     
     ##
-    log("----------------------------------------------------------------", printLog)
-    log(paste(debugIterationsCount, ". trying to remove selector: ", as.character(prunedComplexTry[[i]])), printLog)
+    logMsg("----------------------------------------------------------------", printLog)
+    logMsg(paste(debugIterationsCount, ". trying to remove selector: ", as.character(prunedComplexTry[[i]])), printLog)
     ##
     
     prunedComplexTry[[i]] <- NULL
@@ -501,7 +514,7 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
     prunedComplexTryError <- .computeErrorComplex(complex = prunedComplexTry, dataFrame = pruningDataFrame, variableClassifyOn = variableClassifyOn, classifiedAs = classifiedAs)
     
     ##
-    log(paste("new err vs old: ",prunedComplexTryError, " vs ", prunedComplexError), printLog)
+    logMsg(paste("new err vs old: ",prunedComplexTryError, " vs ", prunedComplexError), printLog)
     ##
     
     pruned <- FALSE
@@ -518,7 +531,7 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
       tempOldClassifiedAs <- classifiedAs
       if(is.character(classifiedAs))
       {   # "class"
-
+        
         trainingDataCoveredSamples <- trainingDataFrame[.check(prunedComplex, trainingDataFrame), variableClassifyOn]
         classifiedAs <- attr(which.max(table(trainingDataCoveredSamples)), "names")
       }
@@ -533,13 +546,13 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
       }
       ################################################################################################################################
       
-      log(paste("-------->pruned! old class: ", tempOldClassifiedAs ," changed to ",classifiedAs), printLog)
+      logMsg(paste("-------->pruned! old class: ", tempOldClassifiedAs ," changed to ",classifiedAs), printLog)
     }
     
     if(pruned == FALSE)
     {
       i<-i+1
-      log("not pruned!", printLog)
+      logMsg("not pruned!", printLog)
     }
     if(debugIterationsCount == debugMaxIters)
     {
@@ -559,9 +572,9 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
     #classifiedAs <- rule$consequent$consequentValue
     coveredSamples <- dataFrame[coveredSamplesBool, variableClassifyOn]
     #print(paste("covered samples:", paste(coveredSamples, collapse=" ")))
-    #newConsequentValue <- attr(which.max(table(coveredSamples)), "names") # most frequent value in coveredSamples   # attr(which.max(table(rpartNurseryTrainingDataFrame[1:10,]["social"])), "names") 
+    #newConsequentValue <- attr(which.max(table(coveredSamples)), "names") # most frequent value in coveredSamples   # attr(which.max(table(rpartNurseryTrainingDataFrame[1:10,]["social"])), "names")
     coveredSamplesCount <- length(coveredSamples)
-    #log(paste("computeErrorComplex().coveredSamplesCount:",coveredSamplesCount), TRUE)
+    #logMsg(paste("computeErrorComplex().coveredSamplesCount:",coveredSamplesCount), TRUE)
     if(coveredSamplesCount == 0)
     {
       return (0)
@@ -574,7 +587,7 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
     coveredSamplesBool <- .check(complex, dataFrame)
     coveredSamples <- dataFrame[coveredSamplesBool, variableClassifyOn]
     coveredSamplesCount <- length(coveredSamples)
-    #log(paste("computeErrorComplex().coveredSamplesCount:",coveredSamplesCount), TRUE)
+    #logMsg(paste("computeErrorComplex().coveredSamplesCount:",coveredSamplesCount), TRUE)
     if(coveredSamplesCount == 0)
     {
       return (0)
@@ -648,61 +661,70 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
 #' prediction <- predict(objec = ruleSet, newdata = kyphosis)
 #' print(prediction)
 predict.ruleset <- function(object, newdata, printLog,
-                          #type = c("vector", "prob", "class", "matrix"), na.action = na.pass,
-                          ...)
+                            #type = c("vector", "prob", "class", "matrix"), na.action = na.pass,
+                            ...)
 {
   if (!inherits(object, "ruleset")) stop("Not a legitimate \"ruleset\" object")
-
-#predict <- function(ruleSet, toBeClassifiedDataFrame, trainingDataFrame, printLog)
-#{
+  
+  #predict <- function(ruleSet, toBeClassifiedDataFrame, trainingDataFrame, printLog)
+  #{
   ##apply(rpartNurseryTrainingDataFrame[1:5,],MARGIN = 1,  function(x) {x[8]} )
   #apply(dataToBeClassified, 1, function(x) {lapply} )
   
   ruleList <- object$ruleList
   trainingDataFrame <- object$trainingDataFrame
   
-  #strip data from rows with NaN values
-  toBeClassifiedDataFrame <- newdata[complete.cases(newdata),]
+  ##strip data from rows with Na values
+  #trainingDataFrame <- trainingDataFrame[complete.cases(trainingDataFrame),]
+  ##strip data from rows with empty factor values
+  #trainingDataFrame <- trainingDataFrame[rowSums(trainingDataFrame[,colnames(trainingDataFrame)]=='')==0,]
+  trainingDataFrame <- .strip(trainingDataFrame)
+  
+  ##strip data from rows with Na values
+  #toBeClassifiedDataFrame <- newdata[complete.cases(newdata),]
+  ##strip data from rows with empty factor values
+  #toBeClassifiedDataFrame <- toBeClassifiedDataFrame[rowSums(toBeClassifiedDataFrame[,colnames(toBeClassifiedDataFrame)]=='')==0,]
+  toBeClassifiedDataFrame <- .strip(newdata)
   
   # find out how many samples from training set is covered by each rule
   rulesCoveredSamplesCount <- sapply(ruleList, function(x)
-    {
-      return (sum(.check(x, trainingDataFrame)))
-    })
+  {
+    return (sum(.check(x, trainingDataFrame)))
+  })
   
-  log(paste("rulesCoveredSamplesCount:", paste(rulesCoveredSamplesCount, collapse = " ")), printLog = printLog)
+  logMsg(paste("rulesCoveredSamplesCount:", paste(rulesCoveredSamplesCount, collapse = " ")), printLog = printLog)
   
   # is-sample-covered-by-rule matrix
   samplesCoveredByRulesMatrixBool <- apply(toBeClassifiedDataFrame, 1, function(sample)
+  {
+    return (sapply(ruleList, function(rule)
     {
-      return (sapply(ruleList, function(rule) 
-        {
-          #single sample, single rule
-          return (.check(rule,sample))
-        }) )
-    })
+      #single sample, single rule
+      return (.check(rule,sample))
+    }) )
+  })
   
-  log("is-sample-covered-by-rule matrix:", printLog = printLog)
-  log(samplesCoveredByRulesMatrixBool, printLog = printLog)
+  logMsg("is-sample-covered-by-rule matrix:", printLog = printLog)
+  logMsg(samplesCoveredByRulesMatrixBool, printLog = printLog)
   
   # pick the rule with most samples from training set
   samplesCount <- ncol(samplesCoveredByRulesMatrixBool)
   samplesRulesNumbers <- vector(mode = "numeric", length = samplesCount)
   for(i in 1:samplesCount)
   {
-    log(paste("--> sample ", i), printLog = printLog)
+    logMsg(paste("--> sample ", i), printLog = printLog)
     ithSampleRuleCoverMask <- samplesCoveredByRulesMatrixBool[,i]
-    log("     is covered by:", printLog = printLog)
-    log(ithSampleRuleCoverMask, printLog = printLog)
+    logMsg("     is covered by:", printLog = printLog)
+    logMsg(ithSampleRuleCoverMask, printLog = printLog)
     #which.max(rulesCoveredSamplesCount[rulesCover[,1]])
     ruleThatWinsIndex <- which(ithSampleRuleCoverMask)[which.max(rulesCoveredSamplesCount[ithSampleRuleCoverMask])]
-    log(paste("     but the winner is rule no:", ruleThatWinsIndex), printLog = printLog)
+    logMsg(paste("     but the winner is rule no:", ruleThatWinsIndex), printLog = printLog)
     #ruleThatWinsIndex == 0 if none of existing rules cover this sample
     samplesRulesNumbers[[i]] <- ruleThatWinsIndex
   }
   
-  log("     so, eventually, chosen rules are:", printLog = printLog)
-  log(samplesRulesNumbers, printLog = printLog)
+  logMsg("     so, eventually, chosen rules are:", printLog = printLog)
+  logMsg(samplesRulesNumbers, printLog = printLog)
   
   samplesRulesNumberIter <- 0
   error <- 0
@@ -712,18 +734,18 @@ predict.ruleset <- function(object, newdata, printLog,
   {
     # sample is a single row from data frame now. its class is "numeric" !!
     samplesRulesNumberIter <<- samplesRulesNumberIter + 1
-
-    # logging ...    
-    log(paste("--> sample:", samplesRulesNumberIter), printLog = printLog)
+    
+    # logging ...
+    logMsg(paste("--> sample:", samplesRulesNumberIter), printLog = printLog)
     tempSingleSampleDf <- rbind(sample)
     colnames(tempSingleSampleDf) <- colnames(toBeClassifiedDataFrame)
-    log(tempSingleSampleDf, printLog = printLog)
+    logMsg(tempSingleSampleDf, printLog = printLog)
     #
     
     winningRuleIndex <- samplesRulesNumbers[[samplesRulesNumberIter]]# this sample winning rule index
     
-    log(paste("     winning rule index:", winningRuleIndex), printLog = printLog)
-    log(paste("     winning rule:", ruleList[[winningRuleIndex]]), printLog = printLog)
+    logMsg(paste("     winning rule index:", winningRuleIndex), printLog = printLog)
+    logMsg(paste("     winning rule:", ruleList[[winningRuleIndex]]), printLog = printLog)
     
     if(winningRuleIndex < 1L)
     { # this sample wasnt classified (no rule covered the sample)
@@ -737,14 +759,14 @@ predict.ruleset <- function(object, newdata, printLog,
     classifiedAs <- ruleList[[winningRuleIndex]]$consequent$consequentValue
     shouldBeClassifiedAs <- sample[[variableWeWereClassifingOn]]
     
-    log(paste("     should be classified as ", shouldBeClassifiedAs, ", classified as ", classifiedAs), printLog = printLog)
+    logMsg(paste("     should be classified as ", shouldBeClassifiedAs, ", classified as ", classifiedAs), printLog = printLog)
     
     if( is.character(classifiedAs))
     { # "categorical"
       #print("class")
-      if(!(shouldBeClassifiedAs == classifiedAs))
+      if(!(shouldBeClassifiedAs == classifiedAs) && shouldBeClassifiedAs != "")
       {
-        log("     missed!", printLog = printLog)
+        logMsg("     missed!", printLog = printLog)
         error <<- error + 1
       }
     }
@@ -761,22 +783,32 @@ predict.ruleset <- function(object, newdata, printLog,
     return(classifiedAs)
   })
   
-  log(error, printLog = printLog)
+  logMsg(error, printLog = printLog)
   
   # compute classification error
   if(overallNumberOfClassificationsDone > 0L)
   {
-    error <- error/overallNumberOfClassificationsDone    
+    error <- error/overallNumberOfClassificationsDone
   }
   
-  log("----------------------------------------------------------------", printLog = printLog)
-  log(paste("Stripped samples count: ", nrow(newdata) - nrow(toBeClassifiedDataFrame) ), printLog = printLog)
-  log(paste("Classifications done count: ", overallNumberOfClassificationsDone), printLog = printLog)
-  log(paste("Misclassified factor / mse: ", error), printLog = printLog)
-  log(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
+  logMsg("----------------------------------------------------------------", printLog = printLog)
+  logMsg(paste("Stripped samples count: ", nrow(newdata) - nrow(toBeClassifiedDataFrame) ), printLog = printLog)
+  logMsg(paste("Classifications done count: ", overallNumberOfClassificationsDone), printLog = printLog)
+  logMsg(paste("Misclassified factor / mse: ", error), printLog = printLog)
+  logMsg(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
   
   return (list(predictions = result, error = error))
 }
+
+.strip <- function(dataframe)
+{
+  #strip data from rows with Na values
+  dataframe <- dataframe[complete.cases(dataframe),]
+  #strip data from rows with empty factor values
+  dataframe <- dataframe[rowSums(dataframe[,colnames(dataframe)]=='')==0,]
+  return (dataframe)
+}
+
 
 
 ####################################################################################################################################################################################
@@ -799,7 +831,7 @@ predict.ruleset <- function(object, newdata, printLog,
 #  {
 #    return (0)
 #  }
-#  
+#
 #  # check realValues type
 #  type <- "annova"
 #  realValueExample <- realValues[0]
@@ -807,7 +839,7 @@ predict.ruleset <- function(object, newdata, printLog,
 #  {
 #    type <- "class"
 #  }
-#  
+#
 #  # compute error
 #  error <- 0
 #  if(type == "annova")
@@ -815,14 +847,14 @@ predict.ruleset <- function(object, newdata, printLog,
 #    apply(realValues, 1, function(realValue) {  # for each of data sample
 #      # compute error - mse numerator
 #      error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
-#    })    
+#    })
 #  }
 #  else  # class
 #  {
 #    apply(realValues, 1, function(realValue) {  # for each of data sample
 #      # compute error - number of prediction errors
 #      error <<- error + 1
-#    })    
+#    })
 #  }
 #
 #  # divide error numerator by number of samples
@@ -840,11 +872,11 @@ predict.ruleset <- function(object, newdata, printLog,
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 
-log <- function(x, printLog = FALSE)
+logMsg <- function(x, printLog = FALSE)
 {
   if(printLog)
   {
-    print(x)    
+    print(x)
   }
 }
 
@@ -881,8 +913,8 @@ test <- function()
                                             "c1X", "c2Y", "c3Z", "c4X"), nrow=5, ncol=4, byrow = TRUE))
   
   names(training_data) <- c("c1", "c2", "c3", "c4")
-
-  complex <- Complex()
+  
+  complex <- cmplex()
   complex[[1]] <- CategoricalSelector(decisionVariable = "c1", possibleValues = c("c1Z"))
   complex[[2]] <- CategoricalSelector(decisionVariable = "c2", possibleValues = c("c2Y"))
   ruleList <- list(Rule(complex = complex, consequent = Consequent(consequentKey = "c4", consequentValue = "c4Z")))
@@ -915,7 +947,7 @@ test <- function()
   ## SINGLE SAMPLE
   ############################################################################
   continuousSelector.sample.single <- ContinuousSelector(decisionVariable = colnames(df.single)[1], cutpoint = df.single[1,2]-1, relation = "<")
-
+  
   # launch tested function
   testResult <- .check(selector = continuousSelector.sample.single, sample = df.single)
   expectedTestResult <- c(TRUE)
@@ -923,14 +955,14 @@ test <- function()
   # check test results
   if(!(all(testResult == expectedTestResult) ))
   {
-    stop(paste(test.name, " ", test.name.subtitle.1, " failed!"))  
+    stop(paste(test.name, " ", test.name.subtitle.1, " failed!"))
   }
   
   ############################################################################
   ## MULTIPLE SAMPLE
   ############################################################################
   continuousSelector.sample.multiple <- ContinuousSelector(decisionVariable = colnames(df.multiple)[3L], cutpoint = df.multiple[2,3]-1, relation = ">=")
-
+  
   # launch tested function
   testResult <- .check(selector = continuousSelector.sample.multiple, sample = df.multiple)
   expectedTestResult <- c(FALSE, TRUE)
@@ -938,101 +970,101 @@ test <- function()
   # check test results
   if(!(all(testResult == expectedTestResult) ))
   {
-    stop(paste(test.name, " ", test.name.subtitle.2, " failed!"))  
+    stop(paste(test.name, " ", test.name.subtitle.2, " failed!"))
   }
   
 }
 
 .categoricalSelectorTest <-function(df.single, df.multiple)
 {
-####################################################################################################################################################################################
-####################################################################################################################################################################################
-#############################################                                                                           ############################################################
-#############################################   CATEGORICAL SELECTOR CHECK TEST                                         ############################################################
-#############################################                                                                           ############################################################
-#############################################     [single sample; categorical selector with single possible value]      ############################################################
-#############################################     [single sample; categorical selector with multiple possible values]   ############################################################
-#############################################                                                                           ############################################################
-#############################################     [multiple sample; categorical selector with single possible value]    ############################################################
-#############################################     [multiple sample; categorical selector with multiple possible values] ############################################################
-#############################################                                                                           ############################################################
-####################################################################################################################################################################################
-####################################################################################################################################################################################
-test.name <- "CATEGORICAL SELECTOR CHECK TEST"
-test.name.subtitle.1.1 <- "[single sample; categorical selector with single possible value][no fake data]"
-test.name.subtitle.1.2 <- "[single sample; categorical selector with single possible value][fake data]"
-test.name.subtitle.2 <- "[single sample; categorical selector with multiple possible values]"
-test.name.subtitle.3 <- "[multiple sample; categorical selector with single possible value]"
-test.name.subtitle.4 <- "[multiple sample; categorical selector with multiple possible values]"
-
-############################################################################
-## SINGLE SAMPLE
-############################################################################
-
-fakeData <- "fakeData"
-
-categoricalSelector.single.sample.single.1 <- CategoricalSelector(decisionVariable = colnames(df.single)[3L], possibleValues = c(as.character(df.single[1L, 3L])))
-categoricalSelector.single.sample.single.2 <- CategoricalSelector(decisionVariable = colnames(df.single)[2L], possibleValues = c(fakeData))
-categoricalSelector.multiple.sample.single <- CategoricalSelector(decisionVariable = colnames(df.single)[2L], possibleValues = c(as.character(df.single[1L, 2L]), fakeData))
-
-# launch tested function
-testResult <- .check(selector = categoricalSelector.single.sample.single.1, sample = df.single)
-expectedTestResult <- TRUE
-
-# check test results
-if(!(all(testResult == expectedTestResult)))
-{
-  stop(paste(test.name, " ", test.name.subtitle.1.1, " failed!"))  
-}
-
-# launch tested function
-testResult <- .check(selector = categoricalSelector.single.sample.single.2, sample = df.single)
-expectedTestResult <- FALSE
-# check test results
-if(!(all(testResult == expectedTestResult)))
-{
-  stop(paste(test.name, " ", test.name.subtitle.1.2, " failed!"))  
-}
-
-# launch tested function
-testResult <- .check(selector = categoricalSelector.multiple.sample.single, sample = df.single)
-expectedTestResult <- TRUE
-
-# check test results
-if(!(all(testResult == expectedTestResult)))
-{
-  stop(paste(test.name, " ", test.name.subtitle.2, " failed!"))  
-}
-
-############################################################################
-## MULTPILE SAMPLE
-############################################################################
-
-categoricalSelector.single.sample.multiple <- CategoricalSelector(decisionVariable = colnames(df.multiple)[4L], possibleValues = c(as.character(df.multiple[6L, 4L])))
-categoricalSelector.multiple.sample.multiple <- CategoricalSelector(decisionVariable = colnames(df.multiple)[1L], possibleValues = c(as.character(df.multiple[1L, 1L]), as.character(df.multiple[3L, 1L])))
-
-# launch tested function
-testResult <- .check(selector = categoricalSelector.single.sample.multiple, sample = df.multiple)
-expectedTestResult <- c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE)
-
-# check test results
-if(!(all(testResult == expectedTestResult)))
-{
-  stop(paste(test.name, " ", test.name.subtitle.3, " failed!"))  
-}
-
-# launch tested function
-testResult <- .check(selector = categoricalSelector.multiple.sample.multiple, sample = df.multiple)
-expectedTestResult <- c(TRUE, FALSE, TRUE, FALSE, FALSE, FALSE)
-
-# check test results
-if(!(all(testResult == expectedTestResult) ))
-{
-  stop(paste(test.name, " ", test.name.subtitle.4, " failed!"))  
-}
-
-####################################################################################################################################################################################
-####################################################################################################################################################################################
+  ####################################################################################################################################################################################
+  ####################################################################################################################################################################################
+  #############################################                                                                           ############################################################
+  #############################################   CATEGORICAL SELECTOR CHECK TEST                                         ############################################################
+  #############################################                                                                           ############################################################
+  #############################################     [single sample; categorical selector with single possible value]      ############################################################
+  #############################################     [single sample; categorical selector with multiple possible values]   ############################################################
+  #############################################                                                                           ############################################################
+  #############################################     [multiple sample; categorical selector with single possible value]    ############################################################
+  #############################################     [multiple sample; categorical selector with multiple possible values] ############################################################
+  #############################################                                                                           ############################################################
+  ####################################################################################################################################################################################
+  ####################################################################################################################################################################################
+  test.name <- "CATEGORICAL SELECTOR CHECK TEST"
+  test.name.subtitle.1.1 <- "[single sample; categorical selector with single possible value][no fake data]"
+  test.name.subtitle.1.2 <- "[single sample; categorical selector with single possible value][fake data]"
+  test.name.subtitle.2 <- "[single sample; categorical selector with multiple possible values]"
+  test.name.subtitle.3 <- "[multiple sample; categorical selector with single possible value]"
+  test.name.subtitle.4 <- "[multiple sample; categorical selector with multiple possible values]"
+  
+  ############################################################################
+  ## SINGLE SAMPLE
+  ############################################################################
+  
+  fakeData <- "fakeData"
+  
+  categoricalSelector.single.sample.single.1 <- CategoricalSelector(decisionVariable = colnames(df.single)[3L], possibleValues = c(as.character(df.single[1L, 3L])))
+  categoricalSelector.single.sample.single.2 <- CategoricalSelector(decisionVariable = colnames(df.single)[2L], possibleValues = c(fakeData))
+  categoricalSelector.multiple.sample.single <- CategoricalSelector(decisionVariable = colnames(df.single)[2L], possibleValues = c(as.character(df.single[1L, 2L]), fakeData))
+  
+  # launch tested function
+  testResult <- .check(selector = categoricalSelector.single.sample.single.1, sample = df.single)
+  expectedTestResult <- TRUE
+  
+  # check test results
+  if(!(all(testResult == expectedTestResult)))
+  {
+    stop(paste(test.name, " ", test.name.subtitle.1.1, " failed!"))
+  }
+  
+  # launch tested function
+  testResult <- .check(selector = categoricalSelector.single.sample.single.2, sample = df.single)
+  expectedTestResult <- FALSE
+  # check test results
+  if(!(all(testResult == expectedTestResult)))
+  {
+    stop(paste(test.name, " ", test.name.subtitle.1.2, " failed!"))
+  }
+  
+  # launch tested function
+  testResult <- .check(selector = categoricalSelector.multiple.sample.single, sample = df.single)
+  expectedTestResult <- TRUE
+  
+  # check test results
+  if(!(all(testResult == expectedTestResult)))
+  {
+    stop(paste(test.name, " ", test.name.subtitle.2, " failed!"))
+  }
+  
+  ############################################################################
+  ## MULTPILE SAMPLE
+  ############################################################################
+  
+  categoricalSelector.single.sample.multiple <- CategoricalSelector(decisionVariable = colnames(df.multiple)[4L], possibleValues = c(as.character(df.multiple[6L, 4L])))
+  categoricalSelector.multiple.sample.multiple <- CategoricalSelector(decisionVariable = colnames(df.multiple)[1L], possibleValues = c(as.character(df.multiple[1L, 1L]), as.character(df.multiple[3L, 1L])))
+  
+  # launch tested function
+  testResult <- .check(selector = categoricalSelector.single.sample.multiple, sample = df.multiple)
+  expectedTestResult <- c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE)
+  
+  # check test results
+  if(!(all(testResult == expectedTestResult)))
+  {
+    stop(paste(test.name, " ", test.name.subtitle.3, " failed!"))
+  }
+  
+  # launch tested function
+  testResult <- .check(selector = categoricalSelector.multiple.sample.multiple, sample = df.multiple)
+  expectedTestResult <- c(TRUE, FALSE, TRUE, FALSE, FALSE, FALSE)
+  
+  # check test results
+  if(!(all(testResult == expectedTestResult) ))
+  {
+    stop(paste(test.name, " ", test.name.subtitle.4, " failed!"))
+  }
+  
+  ####################################################################################################################################################################################
+  ####################################################################################################################################################################################
 }
 
 .categoricalComplexTest <- function(df.single, df.multiple)
@@ -1065,17 +1097,17 @@ if(!(all(testResult == expectedTestResult) ))
   categoricalSelector.sample.single.1 <- CategoricalSelector(decisionVariable = colnames(df.single)[4L], possibleValues = c(as.character(df.single[1L, 4L])))
   categoricalSelector.sample.single.2 <- CategoricalSelector(decisionVariable = colnames(df.single)[4L], possibleValues = c(as.character(fakeData)))
   
-  complex.single <- Complex()
+  complex.single <- cmplex()
   complex.single[[1]] <- categoricalSelector.sample.single.1
   
-  complex.multiple <- Complex()
+  complex.multiple <- cmplex()
   complex.multiple[[1]] <- categoricalSelector.sample.single.1
   complex.multiple[[2]] <- categoricalSelector.sample.single.2
   
-  complex.multiple.2 <- Complex()
+  complex.multiple.2 <- cmplex()
   complex.multiple.2[[1]] <- CategoricalSelector(decisionVariable = colnames(df.multiple)[3L], possibleValues = c(as.character(df.multiple[2L, 3L]), as.character(df.multiple[5L, 3L])))
   complex.multiple.2[[2]] <- CategoricalSelector(decisionVariable = colnames(df.multiple)[4L], possibleValues = c(as.character(df.multiple[2L, 4L]), as.character(df.multiple[6L, 4L])))
-
+  
   # launch tested function
   testResult <- .check(complex.single, sample = df.single)
   expectedTestResult <- TRUE
@@ -1083,7 +1115,7 @@ if(!(all(testResult == expectedTestResult) ))
   # check test results
   if(!(all(testResult == expectedTestResult)))
   {
-    stop(paste(test.name, " ", test.name.subtitle.1, " failed!"))  
+    stop(paste(test.name, " ", test.name.subtitle.1, " failed!"))
   }
   
   # launch tested function
@@ -1093,7 +1125,7 @@ if(!(all(testResult == expectedTestResult) ))
   # check test results
   if(!(all(testResult == expectedTestResult)))
   {
-    stop(paste(test.name, " ", test.name.subtitle.2, " failed!"))  
+    stop(paste(test.name, " ", test.name.subtitle.2, " failed!"))
   }
   
   ############################################################################
@@ -1107,7 +1139,7 @@ if(!(all(testResult == expectedTestResult) ))
   # check test results
   if(!(all(testResult == expectedTestResult)))
   {
-    stop(paste(test.name, " ", test.name.subtitle.3, " failed!"))  
+    stop(paste(test.name, " ", test.name.subtitle.3, " failed!"))
   }
   
   # launch tested function
@@ -1117,7 +1149,7 @@ if(!(all(testResult == expectedTestResult) ))
   # check test results
   if(!(all(testResult == expectedTestResult)))
   {
-    stop(paste(test.name, " ", test.name.subtitle.4, ".1 failed!"))  
+    stop(paste(test.name, " ", test.name.subtitle.4, ".1 failed!"))
   }
   
   # launch tested function
@@ -1127,7 +1159,7 @@ if(!(all(testResult == expectedTestResult) ))
   # check test results
   if(!(all(testResult == expectedTestResult)))
   {
-    stop(paste(test.name, " ", test.name.subtitle.4, ".2 failed!"))  
+    stop(paste(test.name, " ", test.name.subtitle.4, ".2 failed!"))
   }
   
 }
