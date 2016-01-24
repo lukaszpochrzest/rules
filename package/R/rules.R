@@ -397,11 +397,6 @@ generateRuleSet <- function(object, trainingDataFrame)
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 
-#prune <- function(ruleSet, ...)
-#{
-#  UseMethod("prune")
-#}
-
 #' Prunes rule set
 #'
 #' @param ruleSet Set of rules to prune
@@ -411,7 +406,7 @@ generateRuleSet <- function(object, trainingDataFrame)
 #' @examples
 #' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
 #' ruleSet <- generateRuleSet(fit, kyphosis)
-#' prunedRuleSet <- prune(ruleSet, kyphosis, kyphosis)
+#' prunedRuleSet <- prune(ruleSet = ruleSet, pruningDataFrame = kyphosis)
 #' print(prunedRuleSet)
 prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
 {
@@ -527,13 +522,8 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
   if(is.character(classifiedAs))
   {   # "class"
     coveredSamplesBool <- .check(complex, dataFrame)
-    #variableClassifyOn <- rule$consequent$consequentKey
-    #classifiedAs <- rule$consequent$consequentValue
     coveredSamples <- dataFrame[coveredSamplesBool, variableClassifyOn]
-    #print(paste("covered samples:", paste(coveredSamples, collapse=" ")))
-    #newConsequentValue <- attr(which.max(table(coveredSamples)), "names") # most frequent value in coveredSamples   # attr(which.max(table(rpartNurseryTrainingDataFrame[1:10,]["social"])), "names")
     coveredSamplesCount <- length(coveredSamples)
-    #logMsg(paste("computeErrorComplex().coveredSamplesCount:",coveredSamplesCount), TRUE)
     if(coveredSamplesCount == 0)
     {
       return (0)
@@ -546,7 +536,6 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
     coveredSamplesBool <- .check(complex, dataFrame)
     coveredSamples <- dataFrame[coveredSamplesBool, variableClassifyOn]
     coveredSamplesCount <- length(coveredSamples)
-    #logMsg(paste("computeErrorComplex().coveredSamplesCount:",coveredSamplesCount), TRUE)
     if(coveredSamplesCount == 0)
     {
       return (0)
@@ -560,53 +549,13 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
   }
 }
 
-#computeErrorRuleSingle <- function(rule, dataFrame) # rule must be single
-#{
-#  coveredSamplesBool <- check(rule, dataFrame)
-#  variableClassifyOn <- rule$consequent$consequentKey
-#  classifiedAs <- rule$consequent$consequentValue
-#  coveredSamples <- dataFrame[coveredSamplesBool, variableClassifyOn]
-#  coveredSamplesCount <- length(coveredSamples)
-#  print(paste("coveredSamplesCount:",coveredSamplesCount))
-#  if(coveredSamplesCount == 0)
-#  {#print("tu")
-#    return (0)
-#  }
-#  positivelyClassifiedCount <- sum(coveredSamples == classifiedAs)
-#  return ((coveredSamplesCount-positivelyClassifiedCount)/coveredSamplesCount)
-#}
-
-#computeErrorRuleMultiple <- function(rules, dataFrame)
-#{
-#  return (sapply(rules, computeErrorRuleSingle, dataFrame))
-#}
-
-##performance version
-#computeErrorRuleMultiple <- function(rule, dataFrame)
-#{
-#  #lapply(rpartNurseryDataRuleSet[1:3],check, rpartNurseryDataInputDataFrame[1:10,])
-#  #samplesCovered <- lapply(rule, check, dataFrame)
-#  coveredSamplesBool <- sapply(rule, check, dataFrame)
-#  #lapply(rpartNurseryDataRuleSet[1:3], function(x) {x$consequent$consequentValue})
-#  variableClassifyOn <- lapply(rule, function(x) {x$consequent$consequentValue})
-#  classifiedAs <- lapply(rule, function(x) {x$consequent$consequentKey})
-#  #apply(samplesCovered,2, function(x) {rpartNurseryDataInputDataFrame[1:10,][x,]})
-#  coveredSamplesFullInfo <- apply(coveredSamplesBool, 2, function(x) {dataFrame[x,]})
-#  ##DONT KNOW WHAT NEXT...
-#}
-
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 #############################################                                                                             ##########################################################
-#############################################                       CLASSIFICATION USING RULE SET                         ##########################################################
+#############################################                                 PREDICTION                                  ##########################################################
 #############################################                                                                             ##########################################################
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
-
-#predict <- function(object, ...)
-#{
-#  UseMethod("predict")
-#}
 
 #' Returns a vector of predicted responses from a ruleset object.
 #'
@@ -615,34 +564,17 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
 #' @return vector of predicted responses
 #' @examples
 #' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
-#' ruleSet <- generateRuleSet(fit)
+#' ruleSet <- generateRuleSet(fit, kyphosis)
 #' prediction <- predict(objec = ruleSet, newdata = kyphosis)
 #' print(prediction)
-predict.ruleset <- function(object, newdata,
-                            #printLog,
-                          #type = c("vector", "prob", "class", "matrix"), na.action = na.pass,
-                          ...)
+predict.ruleset <- function(object, newdata, ...)
 {
   if (!inherits(object, "ruleset")) stop("Not a legitimate \"ruleset\" object")
-
-#predict <- function(ruleSet, toBeClassifiedDataFrame, trainingDataFrame, printLog)
-#{
-  ##apply(rpartNurseryTrainingDataFrame[1:5,],MARGIN = 1,  function(x) {x[8]} )
-  #apply(dataToBeClassified, 1, function(x) {lapply} )
 
   ruleList <- object$ruleList
   trainingDataFrame <- object$trainingDataFrame
 
-  ##strip data from rows with Na values
-  #trainingDataFrame <- trainingDataFrame[complete.cases(trainingDataFrame),]
-  ##strip data from rows with empty factor values
-  #trainingDataFrame <- trainingDataFrame[rowSums(trainingDataFrame[,colnames(trainingDataFrame)]=='')==0,]
   trainingDataFrame <- .strip(trainingDataFrame)
-
-  ##strip data from rows with Na values
-  #toBeClassifiedDataFrame <- newdata[complete.cases(newdata),]
-  ##strip data from rows with empty factor values
-  #toBeClassifiedDataFrame <- toBeClassifiedDataFrame[rowSums(toBeClassifiedDataFrame[,colnames(toBeClassifiedDataFrame)]=='')==0,]
   toBeClassifiedDataFrame <- .strip(newdata)
 
   # find out how many samples from training set is covered by each rule
@@ -651,9 +583,6 @@ predict.ruleset <- function(object, newdata,
       return (sum(.check(x, trainingDataFrame)))
     })
 
-  #logMsg(paste("rulesCoveredSamplesCount:", paste(rulesCoveredSamplesCount, collapse = " ")), printLog = printLog)
-
-  # is-sample-covered-by-rule matrix
   samplesCoveredByRulesMatrixBool <- apply(toBeClassifiedDataFrame, 1, function(sample)
     {
       return (sapply(ruleList, function(rule)
@@ -663,27 +592,15 @@ predict.ruleset <- function(object, newdata,
         }) )
     })
 
-  #logMsg("is-sample-covered-by-rule matrix:", printLog = printLog)
-  #logMsg(samplesCoveredByRulesMatrixBool, printLog = printLog)
-
   # pick the rule with most samples from training set
   samplesCount <- ncol(samplesCoveredByRulesMatrixBool)
   samplesRulesNumbers <- vector(mode = "numeric", length = samplesCount)
   for(i in 1:samplesCount)
   {
-    #logMsg(paste("--> sample ", i), printLog = printLog)
     ithSampleRuleCoverMask <- samplesCoveredByRulesMatrixBool[,i]
-    #logMsg("     is covered by:", printLog = printLog)
-    #logMsg(ithSampleRuleCoverMask, printLog = printLog)
-    #which.max(rulesCoveredSamplesCount[rulesCover[,1]])
     ruleThatWinsIndex <- which(ithSampleRuleCoverMask)[which.max(rulesCoveredSamplesCount[ithSampleRuleCoverMask])]
-    #logMsg(paste("     but the winner is rule no:", ruleThatWinsIndex), printLog = printLog)
-    #ruleThatWinsIndex == 0 if none of existing rules cover this sample
     samplesRulesNumbers[[i]] <- ruleThatWinsIndex
   }
-
-  #logMsg("     so, eventually, chosen rules are:", printLog = printLog)
-  #logMsg(samplesRulesNumbers, printLog = printLog)
 
   samplesRulesNumberIter <- 0
   error <- 0
@@ -694,17 +611,10 @@ predict.ruleset <- function(object, newdata,
     # sample is a single row from data frame now. its class is "numeric" !!
     samplesRulesNumberIter <<- samplesRulesNumberIter + 1
 
-    # logging ...
-    #logMsg(paste("--> sample:", samplesRulesNumberIter), printLog = printLog)
     tempSingleSampleDf <- rbind(sample)
     colnames(tempSingleSampleDf) <- colnames(toBeClassifiedDataFrame)
-    #logMsg(tempSingleSampleDf, printLog = printLog)
-    #
 
     winningRuleIndex <- samplesRulesNumbers[[samplesRulesNumberIter]]# this sample winning rule index
-
-    #logMsg(paste("     winning rule index:", winningRuleIndex), printLog = printLog)
-    #logMsg(paste("     winning rule:", ruleList[[winningRuleIndex]]), printLog = printLog)
 
     if(winningRuleIndex < 1L)
     { # this sample wasnt classified (no rule covered the sample)
@@ -718,22 +628,16 @@ predict.ruleset <- function(object, newdata,
     classifiedAs <- ruleList[[winningRuleIndex]]$consequent$consequentValue
     shouldBeClassifiedAs <- sample[[variableWeWereClassifingOn]]
 
-    #logMsg(paste("     should be classified as ", shouldBeClassifiedAs, ", classified as ", classifiedAs), printLog = printLog)
-
     if( is.character(classifiedAs))
     { # "categorical"
-      #print("class")
       if(!(shouldBeClassifiedAs == classifiedAs) && shouldBeClassifiedAs != "")
       {
-        #logMsg("     missed!", printLog = printLog)
         error <<- error + 1
       }
     }
     else if(is.numeric(classifiedAs))
     { # "continuous"
-      #print((classifiedAs - shouldBeClassifiedAs)^2)
       error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
-      #print("anova")
     }
     else
     { # just in case
@@ -742,19 +646,11 @@ predict.ruleset <- function(object, newdata,
     return(classifiedAs)
   })
 
-  #logMsg(error, printLog = printLog)
-
   # compute classification error
   if(overallNumberOfClassificationsDone > 0L)
   {
     error <- error/overallNumberOfClassificationsDone
   }
-
-  #logMsg("----------------------------------------------------------------", printLog = printLog)
-  #logMsg(paste("Stripped samples count: ", nrow(newdata) - nrow(toBeClassifiedDataFrame) ), printLog = printLog)
-  #logMsg(paste("Classifications done count: ", overallNumberOfClassificationsDone), printLog = printLog)
-  #logMsg(paste("Misclassified factor / mse: ", error), printLog = printLog)
-  #logMsg(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
 
   return (list(predictions = result, error = error))
 }
@@ -767,61 +663,6 @@ predict.ruleset <- function(object, newdata,
   dataframe <- dataframe[rowSums(dataframe[,colnames(dataframe)]=='')==0,]
   return (dataframe)
 }
-
-
-
-####################################################################################################################################################################################
-####################################################################################################################################################################################
-#############################################                                                                             ##########################################################
-#############################################                             COMPUTE ERROR                                   ##########################################################
-#############################################                                                                             ##########################################################
-####################################################################################################################################################################################
-####################################################################################################################################################################################
-
-#.computeErrorInternal <- function(predictions, realValues)
-#{
-#  # args check
-#  realValuesLength = length(realValues)
-#  if(realValuesLength != length(predictions))
-#  {
-#    stop("There has to be equal number of both predictions and real values")
-#  }
-#  if(realValuesLength < 1)
-#  {
-#    return (0)
-#  }
-#
-#  # check realValues type
-#  type <- "annova"
-#  realValueExample <- realValues[0]
-#  if(is.character(realValueExample))
-#  {
-#    type <- "class"
-#  }
-#
-#  # compute error
-#  error <- 0
-#  if(type == "annova")
-#  {
-#    apply(realValues, 1, function(realValue) {  # for each of data sample
-#      # compute error - mse numerator
-#      error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
-#    })
-#  }
-#  else  # class
-#  {
-#    apply(realValues, 1, function(realValue) {  # for each of data sample
-#      # compute error - number of prediction errors
-#      error <<- error + 1
-#    })
-#  }
-#
-#  # divide error numerator by number of samples
-#  error <- error/realValuesLength
-#
-#  return (error)
-#}
-
 
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
@@ -847,7 +688,7 @@ logMsg <- function(x, printLog = FALSE)
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 
-test <- function()
+.test <- function()
 {
   ##  TEST1
 
