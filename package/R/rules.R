@@ -39,7 +39,7 @@
 #   rpartWineDataRuleSetPruned <- prune(ruleSet = rpartWineTrainingDataRuleSet, pruningDataFrame = rpartWinePruningDataFrame, printLog = TRUE)
 #
 #   # CLASSIFICATION AND ERROR COMPUTATION #need some new "real data" set, pruning data set slice used temporarily instead
-#   error <- predict(object = rpartWineTrainingDataRuleSet, newdata = rpartWineTestDataFrame, printLog = TRUE)
+#   error <- predict(object = rpartWineTrainingDataRuleSet, newdata = rpartWineTestDataFrame)
 #
 #   # error withou pruning = 0.515719064796118 # sprawdzone z rpart
 #
@@ -66,7 +66,7 @@
 #   rpartNurseryDataRuleSetPruned <- prune(ruleSet = rpartNurseryTrainingDataRuleSet, pruningDataFrame = rpartNurseryPruningDataFrame, printLog = TRUE)
 #
 #   # CLASSIFICATION AND ERROR COMPUTATION #need some new "real data" set, pruning data set slice used temporarily instead
-#   error <- predict(object = rpartNurseryTrainingDataRuleSet, newdata = rpartNurseryTestDataFrame, printLog = TRUE)
+#   error <- predict(object = rpartNurseryTrainingDataRuleSet, newdata = rpartNurseryTestDataFrame)
 #
 #   # error without pruning = 0.121157729414404 # sprawdzone z rpart
 #
@@ -123,7 +123,7 @@ Rule <- function(complex, consequent)
   return(me)
 }
 
-RuleSet <- function(ruleList, trainingDataFrame) {
+ruleset <- function(ruleList, trainingDataFrame) {
   me <- list(ruleList = ruleList, trainingDataFrame = trainingDataFrame)
   class(me) <- append(class(me), "ruleset")
   return(me)
@@ -144,27 +144,27 @@ RuleSet <- function(ruleList, trainingDataFrame) {
   UseMethod(".check",selector)
 }
 
-.check.CategoricalSelector <- function(selector, sample) # sample may be both singular (1 row data frame) or multiple
+.check.CategoricalSelector <- function(selector, sample)
 {
   return(sapply(sample[[selector$decisionVariable]], function (x) {any(x == selector$possibleValues)}))
 }
 
-.check.ContinuousSelector <- function(selector, sample)  # sample may be both singular (1 row data frame) or multiple
+.check.ContinuousSelector <- function(selector, sample)
 {
   if(selector$relation == ">=")
   {
-    return (sapply(sample[[selector$decisionVariable]], ">=", selector$cutpoint))  #  wersja bez lapply
+    return (sapply(sample[[selector$decisionVariable]], ">=", selector$cutpoint))
   }
   else if(selector$relation == "<")
   {
-    return (sapply(sample[[selector$decisionVariable]], "<", selector$cutpoint))  # wersja bez lapply
+    return (sapply(sample[[selector$decisionVariable]], "<", selector$cutpoint))
   }
   else#just to make sure
   {
     stop(paste("Error. Unknown Continous selector relation ", selector$relation))
   }
 }
-.check.cmplex <- function(complex, sample)# sample may be both singular (1 row data frame) or multiple, complex ma be both singular(1 selector) or multiple
+.check.cmplex <- function(complex, sample)
 {
   selectorCheckResult <- sapply(complex, function(selector)
   {
@@ -211,6 +211,10 @@ as.character.Rule <- function(x, ...)
   return(paste(as.character(x$complex), " => ", as.character(x$consequent)))
 }
 
+as.character.ruleset <- function(x, ...)
+{
+  return(x$ruleList)
+}
 
 print.CategoricalSelector <- function(x, ...)
 {
@@ -228,6 +232,11 @@ print.cmplex <- function(x, ...)
 }
 
 print.Rule <- function(x, ...)
+{
+  print(as.character(x))
+}
+
+print.ruleset <- function(x, ...)
 {
   print(as.character(x))
 }
@@ -251,11 +260,12 @@ print.Rule <- function(x, ...)
 
 #' Generates set of rules from a rpart object.
 #'
-#' @param object An \code{rpart} object
+#' @param object A \code{rpart} object.
+#' @param trainingDataFrame A data frame that was used to build \code{object}. It is required for creating ruleset object. Ruleset objects need to contain infromation about this data, because ruleset pruning operation needs it to update rules' consequent values whenever a rule is pruned.
 #' @return Generated set of rules
 #' @examples
 #' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
-#' ruleSet <- generateRuleSet(fit)
+#' ruleSet <- generateRuleSet(fit, trainingDataFrame = kyphosis)
 #' print(ruleSet)
 generateRuleSet <- function(object, trainingDataFrame)
 {
@@ -287,15 +297,6 @@ generateRuleSet <- function(object, trainingDataFrame)
         paths[[i]] <<- append(paths[[i]],parents[i])
       }
     })
-
-    #for(i in 1: leaves_size)
-    #{
-    #  if(parents[i]>0)
-    #  {
-    #    paths[[i]] <- append(paths[[i]],parents[i])
-    #  }
-    #}
-
   }
   return(paths)
 }
@@ -320,10 +321,6 @@ generateRuleSet <- function(object, trainingDataFrame)
     path <- paths[[i]]
     path.length <- length(path)
 
-    ####
-    ####
-    #result class/number
-    #leaf.id <- path[1]
     leaf.id <- path[1L]
     frame.row.index <- which(row.names(object$frame)==leaf.id)
     if(length(frame.row.index)==0)
@@ -335,28 +332,21 @@ generateRuleSet <- function(object, trainingDataFrame)
     if(object$method == "anova")
     {
       result <- yval
-      #paths_conditions[[i]][[1]] <- list(result=result)
     }
     else if(object$method == "class")
     {
       result <- ylevels[yval]
-      #paths_conditions[[i]][[1]] <- list(result=result)
     }
     else
     {
       stop(paste("Error. Rpart method ", object$method, " not supported."))
     }
-    ####
-    ####
 
     if(path.length == 1)
     {
       next;
     }
 
-    ####
-    ####
-    #selectors
     complex <- cmplex()
     for(path_node_iter in 2:path.length)
     {
@@ -377,21 +367,7 @@ generateRuleSet <- function(object, trainingDataFrame)
 
         type <- "categorical"
 
-        ##
-        #condition <- paste(decision_variable,"=",ifelse(previous_node.is_right_child,"R","L"),paste(decision_variable.values_to_child,collapse=" "))
-        #if(path_node_iter == 2)
-        #{
-        #  paths_conditions[[i]] <- condition
-        #}
-        #else
-        #{
-        #  paths_conditions[[i]] <- append(paths_conditions[[i]],condition)
-        #}
-        ##
-
-        #selector <- list(type = type, decision_variable = paste(decision_variable), possible_values = decision_variable.values_to_child)
         selector <- CategoricalSelector(decisionVariable = decision_variable, possibleValues = decision_variable.values_to_child)
-        #paths_conditions[[i]][[path_node_iter]] <- selector
         complex[[path_node_iter-1]] <- selector
       }
       else
@@ -400,20 +376,15 @@ generateRuleSet <- function(object, trainingDataFrame)
         cutpoint <- splits_index_column_value
         relation <- ifelse(previous_node.is_right_child,ifelse(ncat<0L,">=","<"),ifelse(ncat<0L,"<",">="))
 
-        #selector <- list(type = type, decision_variable = decision_variable, cutpoint = cutpoint, relation = relation)
         selector <- ContinuousSelector(decisionVariable = decision_variable, cutpoint = cutpoint, relation = relation)
-        #paths_conditions[[i]][[path_node_iter]] <- selector
         complex[[path_node_iter-1]] <- selector
       }
 
     }
-    ####
-    ####
 
-    #paths_conditions[[i]][[2]] <- complex
     paths_conditions[[i]] <- Rule(complex = complex, consequent = Consequent(consequentKey = variableClassifyOn, consequentValue = result))
   }
-  ruleSet <- RuleSet(ruleList = paths_conditions, trainingDataFrame = trainingDataFrame)
+  ruleSet <- ruleset(ruleList = paths_conditions, trainingDataFrame = trainingDataFrame)
   return(ruleSet)
 
 }
@@ -439,8 +410,8 @@ generateRuleSet <- function(object, trainingDataFrame)
 #' @return Pruned rule set
 #' @examples
 #' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
-#' ruleSet <- generateRuleSet(fit)
-#' prunedRuleSet <- pruneRuleSet(ruleSet, kyphosis, kyphosis)
+#' ruleSet <- generateRuleSet(fit, kyphosis)
+#' prunedRuleSet <- prune(ruleSet, kyphosis, kyphosis)
 #' print(prunedRuleSet)
 prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
 {
@@ -448,30 +419,25 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
   ruleList <- ruleSet$ruleList
   trainingDataFrame <- ruleSet$trainingDataFrame
 
-  ## strip pruning data from rows with Na values
-  #pruningDataFrame <- pruningDataFrame[complete.cases(pruningDataFrame),]
   pruningDataFrame <- .strip(pruningDataFrame)
-
-  ## strip training data from rows with Na values
-  #trainingDataFrame <- trainingDataFrame[complete.cases(trainingDataFrame),]
   trainingDataFrame <- .strip(trainingDataFrame)
 
   ruleListPruned <- lapply(ruleList, function(x)
     {
       logMsg("----------------------------------------------------------------", printLog)
-      logMsg("----------------------------------------------------------------", printLog)
+      logMsg(paste("---------------- pruning rule: ", x), printLog)
       .pruneRule(rule = x, pruningDataFrame = pruningDataFrame, trainingDataFrame = trainingDataFrame, printLog = printLog)
     })
-  #class(ruleSetPruned) <- "ruleset"
-  ruleSetPruned <- RuleSet(ruleList = ruleListPruned, trainingDataFrame = trainingDataFrame)
+
+  ruleSetPruned <- ruleset(ruleList = ruleListPruned, trainingDataFrame = trainingDataFrame)
   return (ruleSetPruned)
 }
 
-.pruneRule <- function(rule, pruningDataFrame, trainingDataFrame, debugMaxIters = 0, printLog = FALSE) # use trainingDataFrame to calculate new rule consequent
+.pruneRule <- function(rule, pruningDataFrame, trainingDataFrame, printLog = FALSE) # use trainingDataFrame to calculate new rule consequent
 {
   complex <- rule$complex
   complexLength <- length(complex)
-  if(complexLength < 2) # what about up-to-root prunings(<1 condition)?
+  if(complexLength < 2)
   {
     return (rule)
   }
@@ -513,9 +479,7 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
 
     prunedComplexTryError <- .computeErrorComplex(complex = prunedComplexTry, dataFrame = pruningDataFrame, variableClassifyOn = variableClassifyOn, classifiedAs = classifiedAs)
 
-    ##
-    logMsg(paste("new err vs old: ",prunedComplexTryError, " vs ", prunedComplexError), printLog)
-    ##
+    if(printLog==TRUE) {cat(paste("\tnew error vs old error: ",prunedComplexTryError, " vs ", prunedComplexError, "\n"))}
 
     pruned <- FALSE
 
@@ -531,7 +495,6 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
       tempOldClassifiedAs <- classifiedAs
       if(is.character(classifiedAs))
       {   # "class"
-
         trainingDataCoveredSamples <- trainingDataFrame[.check(prunedComplex, trainingDataFrame), variableClassifyOn]
         classifiedAs <- attr(which.max(table(trainingDataCoveredSamples)), "names")
       }
@@ -546,17 +509,13 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
       }
       ################################################################################################################################
 
-      logMsg(paste("-------->pruned! old class: ", tempOldClassifiedAs ," changed to ",classifiedAs), printLog)
+      if(printLog) {cat(paste("\tpruned! old class: ", tempOldClassifiedAs ," changed to ", classifiedAs, "\n"))}
     }
 
     if(pruned == FALSE)
     {
       i<-i+1
-      logMsg("not pruned!", printLog)
-    }
-    if(debugIterationsCount == debugMaxIters)
-    {
-      break
+      if(printLog) {cat("\tnot pruned!\n")}
     }
   }
   rule$complex <-prunedComplex
@@ -649,18 +608,18 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
 #  UseMethod("predict")
 #}
 
-#' Returns a vector of predicted responses from a ruleSet object.
+#' Returns a vector of predicted responses from a ruleset object.
 #'
-#' @param object RuleSet object used to predict. This is assumed to be the result of either \code{generateRuleSet} or \code{pruneRuleSet} function.
-#' @param newdata Data frame containing the values at which predictions are required. The predictors referred to in the right side of formula(object) must be present by name in newdata. If missing, the fitted values are returned
-#' @param printLog Boolean value tells whether to print additinal information while predicting or not
+#' @param object Ruleset object used to predict. This is assumed to be the result of either \code{generateRuleSet} or \code{pruneRuleSet} function.
+#' @param newdata Data frame containing the values at which predictions are required. The predictors referred to in the right side of formula(object) must be present by name in newdata.
 #' @return vector of predicted responses
 #' @examples
 #' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
 #' ruleSet <- generateRuleSet(fit)
 #' prediction <- predict(objec = ruleSet, newdata = kyphosis)
 #' print(prediction)
-predict.ruleset <- function(object, newdata, printLog,
+predict.ruleset <- function(object, newdata,
+                            #printLog,
                           #type = c("vector", "prob", "class", "matrix"), na.action = na.pass,
                           ...)
 {
@@ -692,7 +651,7 @@ predict.ruleset <- function(object, newdata, printLog,
       return (sum(.check(x, trainingDataFrame)))
     })
 
-  logMsg(paste("rulesCoveredSamplesCount:", paste(rulesCoveredSamplesCount, collapse = " ")), printLog = printLog)
+  #logMsg(paste("rulesCoveredSamplesCount:", paste(rulesCoveredSamplesCount, collapse = " ")), printLog = printLog)
 
   # is-sample-covered-by-rule matrix
   samplesCoveredByRulesMatrixBool <- apply(toBeClassifiedDataFrame, 1, function(sample)
@@ -704,27 +663,27 @@ predict.ruleset <- function(object, newdata, printLog,
         }) )
     })
 
-  logMsg("is-sample-covered-by-rule matrix:", printLog = printLog)
-  logMsg(samplesCoveredByRulesMatrixBool, printLog = printLog)
+  #logMsg("is-sample-covered-by-rule matrix:", printLog = printLog)
+  #logMsg(samplesCoveredByRulesMatrixBool, printLog = printLog)
 
   # pick the rule with most samples from training set
   samplesCount <- ncol(samplesCoveredByRulesMatrixBool)
   samplesRulesNumbers <- vector(mode = "numeric", length = samplesCount)
   for(i in 1:samplesCount)
   {
-    logMsg(paste("--> sample ", i), printLog = printLog)
+    #logMsg(paste("--> sample ", i), printLog = printLog)
     ithSampleRuleCoverMask <- samplesCoveredByRulesMatrixBool[,i]
-    logMsg("     is covered by:", printLog = printLog)
-    logMsg(ithSampleRuleCoverMask, printLog = printLog)
+    #logMsg("     is covered by:", printLog = printLog)
+    #logMsg(ithSampleRuleCoverMask, printLog = printLog)
     #which.max(rulesCoveredSamplesCount[rulesCover[,1]])
     ruleThatWinsIndex <- which(ithSampleRuleCoverMask)[which.max(rulesCoveredSamplesCount[ithSampleRuleCoverMask])]
-    logMsg(paste("     but the winner is rule no:", ruleThatWinsIndex), printLog = printLog)
+    #logMsg(paste("     but the winner is rule no:", ruleThatWinsIndex), printLog = printLog)
     #ruleThatWinsIndex == 0 if none of existing rules cover this sample
     samplesRulesNumbers[[i]] <- ruleThatWinsIndex
   }
 
-  logMsg("     so, eventually, chosen rules are:", printLog = printLog)
-  logMsg(samplesRulesNumbers, printLog = printLog)
+  #logMsg("     so, eventually, chosen rules are:", printLog = printLog)
+  #logMsg(samplesRulesNumbers, printLog = printLog)
 
   samplesRulesNumberIter <- 0
   error <- 0
@@ -736,16 +695,16 @@ predict.ruleset <- function(object, newdata, printLog,
     samplesRulesNumberIter <<- samplesRulesNumberIter + 1
 
     # logging ...
-    logMsg(paste("--> sample:", samplesRulesNumberIter), printLog = printLog)
+    #logMsg(paste("--> sample:", samplesRulesNumberIter), printLog = printLog)
     tempSingleSampleDf <- rbind(sample)
     colnames(tempSingleSampleDf) <- colnames(toBeClassifiedDataFrame)
-    logMsg(tempSingleSampleDf, printLog = printLog)
+    #logMsg(tempSingleSampleDf, printLog = printLog)
     #
 
     winningRuleIndex <- samplesRulesNumbers[[samplesRulesNumberIter]]# this sample winning rule index
 
-    logMsg(paste("     winning rule index:", winningRuleIndex), printLog = printLog)
-    logMsg(paste("     winning rule:", ruleList[[winningRuleIndex]]), printLog = printLog)
+    #logMsg(paste("     winning rule index:", winningRuleIndex), printLog = printLog)
+    #logMsg(paste("     winning rule:", ruleList[[winningRuleIndex]]), printLog = printLog)
 
     if(winningRuleIndex < 1L)
     { # this sample wasnt classified (no rule covered the sample)
@@ -759,14 +718,14 @@ predict.ruleset <- function(object, newdata, printLog,
     classifiedAs <- ruleList[[winningRuleIndex]]$consequent$consequentValue
     shouldBeClassifiedAs <- sample[[variableWeWereClassifingOn]]
 
-    logMsg(paste("     should be classified as ", shouldBeClassifiedAs, ", classified as ", classifiedAs), printLog = printLog)
+    #logMsg(paste("     should be classified as ", shouldBeClassifiedAs, ", classified as ", classifiedAs), printLog = printLog)
 
     if( is.character(classifiedAs))
     { # "categorical"
       #print("class")
       if(!(shouldBeClassifiedAs == classifiedAs) && shouldBeClassifiedAs != "")
       {
-        logMsg("     missed!", printLog = printLog)
+        #logMsg("     missed!", printLog = printLog)
         error <<- error + 1
       }
     }
@@ -783,7 +742,7 @@ predict.ruleset <- function(object, newdata, printLog,
     return(classifiedAs)
   })
 
-  logMsg(error, printLog = printLog)
+  #logMsg(error, printLog = printLog)
 
   # compute classification error
   if(overallNumberOfClassificationsDone > 0L)
@@ -791,11 +750,11 @@ predict.ruleset <- function(object, newdata, printLog,
     error <- error/overallNumberOfClassificationsDone
   }
 
-  logMsg("----------------------------------------------------------------", printLog = printLog)
-  logMsg(paste("Stripped samples count: ", nrow(newdata) - nrow(toBeClassifiedDataFrame) ), printLog = printLog)
-  logMsg(paste("Classifications done count: ", overallNumberOfClassificationsDone), printLog = printLog)
-  logMsg(paste("Misclassified factor / mse: ", error), printLog = printLog)
-  logMsg(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
+  #logMsg("----------------------------------------------------------------", printLog = printLog)
+  #logMsg(paste("Stripped samples count: ", nrow(newdata) - nrow(toBeClassifiedDataFrame) ), printLog = printLog)
+  #logMsg(paste("Classifications done count: ", overallNumberOfClassificationsDone), printLog = printLog)
+  #logMsg(paste("Misclassified factor / mse: ", error), printLog = printLog)
+  #logMsg(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
 
   return (list(predictions = result, error = error))
 }
@@ -918,7 +877,7 @@ test <- function()
   complex[[1]] <- CategoricalSelector(decisionVariable = "c1", possibleValues = c("c1Z"))
   complex[[2]] <- CategoricalSelector(decisionVariable = "c2", possibleValues = c("c2Y"))
   ruleList <- list(Rule(complex = complex, consequent = Consequent(consequentKey = "c4", consequentValue = "c4Z")))
-  ruleSet <- RuleSet(trainingDataFrame = training_data, ruleList = ruleList)
+  ruleSet <- ruleset(trainingDataFrame = training_data, ruleList = ruleList)
 
   ruleSetPruned <- prune.ruleset(ruleSet = ruleSet, pruningDataFrame = training_data, printLog = TRUE)
   if(length(ruleSetPruned$ruleList)!=1){
