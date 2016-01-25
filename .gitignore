@@ -2,3 +2,10 @@ src/datasets/
 src/makeDatasets.pyc
 src/.Rhistory
 src/.RData
+package/man/
+src/srcData/nursery2.data
+src/mow_rpart_predict.R
+src/srcData/nursery1.data
+src/srcData/nursery3.data
+src/Result.txt
+package/.Rhistory
