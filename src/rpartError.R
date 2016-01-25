@@ -7,12 +7,13 @@ rulesError <- function()
   #dataList <- list( "datasets/winequality" )
   errors <- computeErrorForDatasets( dataList )
   print( errors )
+  return ( errors )
 }
 
 
 computeErrorForDatasets <- function( datasetsList )
 {
-  cpList <- c( 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.3, 0.05, 0.7, 0.1, 0.5 )
+  cpList <- c( 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.3, 0.05, 0.07, 0.1, 0.5 )
   minSplitsBuckets <- list( c( 1, 1 ), c( 10, 3), c(20, 7), c(40, 14), c( 100, 10), c( 100, 40 ))
   
   
@@ -37,5 +38,5 @@ computeErrorForDatasets <- function( datasetsList )
   return( errorMatrix )
 }
 
-rulesError()
+errorSet <- rulesError()
 #compareDataset( "datasets/winequality" )

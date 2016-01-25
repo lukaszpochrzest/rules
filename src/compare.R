@@ -116,8 +116,10 @@ compareDataset <- function( filePrefix, cpList, minSplitsBuckets )
   # Predict using rule set and pruned rule set
   predict1 <- predict(object = rpartRuleSet, newdata = rpartTestDataFrame, printLog = FALSE)
   predict2 <- predict(object = rpartRuleSetPruned, newdata = rpartTestDataFrame, printLog = FALSE)
+  predict3 <- rpartError( rpartModel = modelRpart, testData = rpartTestDataFrame )
   names( predict1$error ) <- c("rule set")
   names( predict2$error ) <- c("rule set pruned")
+  names( predict3 ) <- c( "pure rpart" )
   
   # Test rpart with other parameters
   result <- c()
@@ -130,7 +132,7 @@ compareDataset <- function( filePrefix, cpList, minSplitsBuckets )
   # Bayes error
   errorBayes <- bayesError(model = modelBayes, dataset = rpartTestDataFrame, modelRpart$method )
   
-  return ( c(errorBayes, predict1$error, predict2$error, result ) )
+  return ( c(errorBayes, predict3, predict1$error, predict2$error, result ) )
 }
 
 ## Function makes the same as compareDataset but only for bayes
