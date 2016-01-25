@@ -580,30 +580,25 @@ prune.ruleset <- function(ruleSet, pruningDataFrame, printLog = FALSE)
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 
-predict.ruleset <- function(object, newdata, printLog,
-                            #type = c("vector", "prob", "class", "matrix"), na.action = na.pass,
-                            ...)
+#' Returns a vector of predicted responses from a ruleset object
+#'
+#' @param object ruleset object used to predict. This is assumed to be the result of either \code{generateRuleSet} or \code{pruneruleSet} function.
+#' @param newdata Data frame containing the values at which predictions are required. The predictors referred to in the right side of formula(object) must be present by name in newdata.
+#' @return vector of predicted responses from a ruleset object
+#' @examples
+#' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+#' ruleSet <- generateRuleSet(fit, kyphosis)
+#' print(ruleSet)
+#' prediction <- predict(objec = ruleSet, newdata = kyphosis)
+#' print(prediction)
+predict.ruleset <- function(object, newdata, printLog = FALSE)
 {
   if (!inherits(object, "ruleset")) stop("Not a legitimate \"ruleset\" object")
-
-  #predict <- function(ruleSet, toBeClassifiedDataFrame, trainingDataFrame, printLog)
-  #{
-  ##apply(rpartNurseryTrainingDataFrame[1:5,],MARGIN = 1,  function(x) {x[8]} )
-  #apply(dataToBeClassified, 1, function(x) {lapply} )
 
   ruleList <- object$ruleList
   trainingDataFrame <- object$trainingDataFrame
 
-  ##strip data from rows with Na values
-  #trainingDataFrame <- trainingDataFrame[complete.cases(trainingDataFrame),]
-  ##strip data from rows with empty factor values
-  #trainingDataFrame <- trainingDataFrame[rowSums(trainingDataFrame[,colnames(trainingDataFrame)]=='')==0,]
   trainingDataFrame <- .strip(trainingDataFrame)
-
-  ##strip data from rows with Na values
-  #toBeClassifiedDataFrame <- newdata[complete.cases(newdata),]
-  ##strip data from rows with empty factor values
-  #toBeClassifiedDataFrame <- toBeClassifiedDataFrame[rowSums(toBeClassifiedDataFrame[,colnames(toBeClassifiedDataFrame)]=='')==0,]
   toBeClassifiedDataFrame <- .strip(newdata)
 
   # find out how many samples from training set is covered by each rule
@@ -612,10 +607,7 @@ predict.ruleset <- function(object, newdata, printLog,
     return (sum(.check(x, trainingDataFrame)))
   })
 
-  logMsg(paste("rulesCoveredSamplesCount:", paste(rulesCoveredSamplesCount, collapse = " ")), printLog = printLog)
-
-  # is-sample-covered-by-rule matrix
-  samplesCoveredByRulesMatrixBool <- apply(toBeClassifiedDataFrame, 1, function(sample)
+  samplesCoveredByrulesMatrixBool <- apply(toBeClassifiedDataFrame, 1, function(sample)
   {
     return (sapply(ruleList, function(rule)
     {
@@ -624,171 +616,40 @@ predict.ruleset <- function(object, newdata, printLog,
     }) )
   })
 
-  logMsg("is-sample-covered-by-rule matrix:", printLog = printLog)
-  logMsg(samplesCoveredByRulesMatrixBool, printLog = printLog)
-
   # pick the rule with most samples from training set
-  samplesCount <- ncol(samplesCoveredByRulesMatrixBool)
-  samplesRulesNumbers <- vector(mode = "numeric", length = samplesCount)
+  samplesCount <- ncol(samplesCoveredByrulesMatrixBool)
+  samplesrulesNumbers <- vector(mode = "numeric", length = samplesCount)
   for(i in 1:samplesCount)
   {
-    logMsg(paste("--> sample ", i), printLog = printLog)
-    ithSampleRuleCoverMask <- samplesCoveredByRulesMatrixBool[,i]
-    logMsg("     is covered by:", printLog = printLog)
-    logMsg(ithSampleRuleCoverMask, printLog = printLog)
-    #which.max(rulesCoveredSamplesCount[rulesCover[,1]])
-    ruleThatWinsIndex <- which(ithSampleRuleCoverMask)[which.max(rulesCoveredSamplesCount[ithSampleRuleCoverMask])]
-    logMsg(paste("     but the winner is rule no:", ruleThatWinsIndex), printLog = printLog)
-    #ruleThatWinsIndex == 0 if none of existing rules cover this sample
-    samplesRulesNumbers[[i]] <- ruleThatWinsIndex
+    ithSampleruleCoverMask <- samplesCoveredByrulesMatrixBool[,i]
+    ruleThatWinsIndex <- which(ithSampleruleCoverMask)[which.max(rulesCoveredSamplesCount[ithSampleruleCoverMask])]
+    samplesrulesNumbers[[i]] <- ruleThatWinsIndex
   }
 
-  logMsg("     so, eventually, chosen rules are:", printLog = printLog)
-  logMsg(samplesRulesNumbers, printLog = printLog)
-
-  samplesRulesNumberIter <- 0
-  error <- 0
-  overallNumberOfClassificationsDone <- 0
-  nonClassfiedSamplesCount <- 0
+  samplesrulesNumberIter <- 0
   result <- apply(toBeClassifiedDataFrame, 1, function(sample)
   {
     # sample is a single row from data frame now. its class is "numeric" !!
-    samplesRulesNumberIter <<- samplesRulesNumberIter + 1
+    samplesrulesNumberIter <<- samplesrulesNumberIter + 1
 
-    # logging ...
-    logMsg(paste("--> sample:", samplesRulesNumberIter), printLog = printLog)
     tempSingleSampleDf <- rbind(sample)
     colnames(tempSingleSampleDf) <- colnames(toBeClassifiedDataFrame)
-    logMsg(tempSingleSampleDf, printLog = printLog)
-    #
 
-    winningRuleIndex <- samplesRulesNumbers[[samplesRulesNumberIter]]# this sample winning rule index
+    winningruleIndex <- samplesrulesNumbers[[samplesrulesNumberIter]]# this sample winning rule index
 
-    logMsg(paste("     winning rule index:", winningRuleIndex), printLog = printLog)
-    logMsg(paste("     winning rule:", ruleList[[winningRuleIndex]]), printLog = printLog)
-
-    if(winningRuleIndex < 1L)
+    if(winningruleIndex < 1L)
     { # this sample wasnt classified (no rule covered the sample)
-      nonClassfiedSamplesCount <<- nonClassfiedSamplesCount + 1
       return (NaN)
     }
 
-    overallNumberOfClassificationsDone <<- overallNumberOfClassificationsDone + 1
+    variableWeWereClassifingOn <- ruleList[[winningruleIndex]]$consequent$consequentKey
+    classifiedAs <- ruleList[[winningruleIndex]]$consequent$consequentValue
 
-    variableWeWereClassifingOn <- ruleList[[winningRuleIndex]]$consequent$consequentKey
-    classifiedAs <- ruleList[[winningRuleIndex]]$consequent$consequentValue
-    shouldBeClassifiedAs <- sample[[variableWeWereClassifingOn]]
-
-    logMsg(paste("     should be classified as ", shouldBeClassifiedAs, ", classified as ", classifiedAs), printLog = printLog)
-
-    if( is.character(classifiedAs))
-    { # "categorical"
-      #print("class")
-      if(!(shouldBeClassifiedAs == classifiedAs) && shouldBeClassifiedAs != "")
-      {
-        logMsg("     missed!", printLog = printLog)
-        error <<- error + 1
-      }
-    }
-    else if(is.numeric(classifiedAs))
-    { # "continuous"
-      #print((classifiedAs - shouldBeClassifiedAs)^2)
-      error <<- error + (classifiedAs - shouldBeClassifiedAs)^2
-      #print("anova")
-    }
-    else
-    { # just in case
-      stop("Error. Unknown rule classification variable type.")
-    }
     return(classifiedAs)
   })
 
-  logMsg(error, printLog = printLog)
-
-  # compute classification error
-  if(overallNumberOfClassificationsDone > 0L)
-  {
-    error <- error/overallNumberOfClassificationsDone
-  }
-
-  logMsg("----------------------------------------------------------------", printLog = printLog)
-  logMsg(paste("Stripped samples count: ", nrow(newdata) - nrow(toBeClassifiedDataFrame) ), printLog = printLog)
-  logMsg(paste("Classifications done count: ", overallNumberOfClassificationsDone), printLog = printLog)
-  logMsg(paste("Misclassified factor / mse: ", error), printLog = printLog)
-  logMsg(paste("Samples not classified count: ", nonClassfiedSamplesCount), printLog = printLog)
-
-  return (list(predictions = result, error = error))
+  return (result)
 }
-
-# #' Returns a vector of predicted responses from a ruleset object
-# #'
-# #' @param object ruleset object used to predict. This is assumed to be the result of either \code{generateRuleSet} or \code{pruneruleSet} function.
-# #' @param newdata Data frame containing the values at which predictions are required. The predictors referred to in the right side of formula(object) must be present by name in newdata.
-# #' @return vector of predicted responses from a ruleset object
-# #' @examples
-# #' fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
-# #' ruleSet <- generateRuleSet(fit, kyphosis)
-# #' print(ruleSet)
-# #' prediction <- predict(objec = ruleSet, newdata = kyphosis)
-# predict.ruleset <- function(object, newdata, printLog = FALSE)
-# {
-#   if (!inherits(object, "ruleset")) stop("Not a legitimate \"ruleset\" object")
-#
-#   ruleList <- object$ruleList
-#   trainingDataFrame <- object$trainingDataFrame
-#
-#   trainingDataFrame <- .strip(trainingDataFrame)
-#   toBeClassifiedDataFrame <- .strip(newdata)
-#
-#   # find out how many samples from training set is covered by each rule
-#   rulesCoveredSamplesCount <- sapply(ruleList, function(x)
-#   {
-#     return (sum(.check(x, trainingDataFrame)))
-#   })
-#
-#   samplesCoveredByrulesMatrixBool <- apply(toBeClassifiedDataFrame, 1, function(sample)
-#   {
-#     return (sapply(ruleList, function(rule)
-#     {
-#       #single sample, single rule
-#       return (.check(rule,sample))
-#     }) )
-#   })
-#
-#   # pick the rule with most samples from training set
-#   samplesCount <- ncol(samplesCoveredByrulesMatrixBool)
-#   samplesrulesNumbers <- vector(mode = "numeric", length = samplesCount)
-#   for(i in 1:samplesCount)
-#   {
-#     ithSampleruleCoverMask <- samplesCoveredByrulesMatrixBool[,i]
-#     ruleThatWinsIndex <- which(ithSampleruleCoverMask)[which.max(rulesCoveredSamplesCount[ithSampleruleCoverMask])]
-#     samplesrulesNumbers[[i]] <- ruleThatWinsIndex
-#   }
-#
-#   samplesrulesNumberIter <- 0
-#   result <- apply(toBeClassifiedDataFrame, 1, function(sample)
-#   {
-#     # sample is a single row from data frame now. its class is "numeric" !!
-#     samplesrulesNumberIter <<- samplesrulesNumberIter + 1
-#
-#     tempSingleSampleDf <- rbind(sample)
-#     colnames(tempSingleSampleDf) <- colnames(toBeClassifiedDataFrame)
-#
-#     winningruleIndex <- samplesrulesNumbers[[samplesrulesNumberIter]]# this sample winning rule index
-#
-#     if(winningruleIndex < 1L)
-#     { # this sample wasnt classified (no rule covered the sample)
-#       return (NaN)
-#     }
-#
-#     variableWeWereClassifingOn <- ruleList[[winningruleIndex]]$consequent$consequentKey
-#     classifiedAs <- ruleList[[winningruleIndex]]$consequent$consequentValue
-#
-#     return(classifiedAs)
-#   })
-#
-#   return (result)
-# }
 
 
 .strip <- function(dataframe)
